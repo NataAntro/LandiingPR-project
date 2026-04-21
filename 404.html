@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 — Коробка потерялась</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;700&family=Unbounded:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #f2f3f6;
+        --ink: #000000;
+        --muted: #5c6470;
+        --line: #e0e2ea;
+        --brand: #243888;
+        --brand-mid: #3f559e;
+        --brand-soft: #6476b6;
+        --brand-fog: #6678b6;
+        --white: #ffffff;
+        --radius-xl: 32px;
+        --radius-pill: 56px;
+        --shadow-soft: 0 24px 70px rgba(36, 56, 136, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.12), transparent 24%),
+          radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.14), transparent 28%),
+          linear-gradient(180deg, var(--brand-mid) 0%, var(--brand-fog) 100%);
+        color: var(--white);
+        font-family: "Inter", sans-serif;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .error-page {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 32px 16px;
+        overflow: clip;
+      }
+
+      .error-page::before,
+      .error-page::after {
+        content: "";
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        filter: blur(18px);
+        opacity: 0.42;
+      }
+
+      .error-page::before {
+        top: -140px;
+        left: -96px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .error-page::after {
+        right: -120px;
+        bottom: -120px;
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .error-card {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 344px) minmax(0, 544px);
+        gap: 24px;
+        align-items: center;
+        width: min(100%, 960px);
+        padding: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 40px;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: var(--shadow-soft);
+        backdrop-filter: blur(14px);
+      }
+
+      .error-copy {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 18px;
+      }
+
+      .error-badge {
+        display: inline-flex;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.16);
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 14px;
+        line-height: 1;
+        transform: rotate(-4deg);
+      }
+
+      .error-title {
+        margin: 0;
+        font-family: "Unbounded", sans-serif;
+        font-size: clamp(38px, 6vw, 62px);
+        line-height: 0.98;
+        letter-spacing: -0.03em;
+      }
+
+      .error-title span {
+        display: block;
+        font-size: clamp(22px, 2.6vw, 28px);
+        line-height: 1.12;
+        letter-spacing: normal;
+      }
+
+      .error-text {
+        max-width: 292px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .error-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        width: 100%;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 53px;
+        padding: 16px 28px;
+        border: 0;
+        border-radius: var(--radius-pill);
+        font-family: "Unbounded", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.4;
+        text-align: center;
+        transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+      }
+
+      .button--primary {
+        background: var(--white);
+        color: var(--brand);
+        box-shadow: 0 16px 32px rgba(10, 19, 58, 0.18);
+      }
+
+      .button--ghost {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.84);
+      }
+
+      .error-note {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .error-visual {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 520px;
+        padding: 22px;
+        border-radius: var(--radius-xl);
+        background: linear-gradient(180deg, rgba(249, 249, 252, 0.98), rgba(242, 243, 246, 0.98));
+      }
+
+      .error-visual picture {
+        width: min(106%, 552px);
+        transform: translateX(10px);
+      }
+
+      .error-visual img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+      }
+
+      .error-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: min(306px, calc(100% - 68px));
+        transform: translate(-50%, -50%);
+        color: var(--brand);
+        font-family: "Caveat", cursive;
+        font-size: clamp(30px, 3vw, 44px);
+        font-weight: 700;
+        line-height: 1.02;
+        text-align: center;
+      }
+
+      .error-label small {
+        font-size: 0.92em;
+      }
+
+      @media (max-width: 900px) {
+        .error-card {
+          grid-template-columns: 1fr;
+          gap: 18px;
+          padding: 20px;
+        }
+
+        .error-copy {
+          align-items: center;
+          text-align: center;
+        }
+
+        .error-text {
+          max-width: 100%;
+        }
+
+        .error-actions {
+          justify-content: center;
+        }
+
+        .error-visual {
+          min-height: 343px;
+          padding: 16px;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .error-page {
+          padding: 16px;
+        }
+
+        .error-card {
+          padding: 16px;
+          border-radius: 32px;
+        }
+
+        .button {
+          width: 100%;
+        }
+
+        .error-actions {
+          flex-direction: column;
+        }
+
+        .error-badge {
+          font-size: 13px;
+        }
+
+        .error-text {
+          font-size: 14px;
+          line-height: 1.5;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="error-page">
+      <section class="error-card" aria-labelledby="error-title">
+        <div class="error-copy">
+          <span class="error-badge">Коробка потерялась</span>
+          <h1 class="error-title" id="error-title">
+            404
+            <span>Эта коробка уехала не в ту комнату</span>
+          </h1>
+          <p class="error-text">
+            Страница не найдена. Похоже, адрес подписали не тем маркером, и грузчики
+            свернули куда-то не туда.
+          </p>
+          <div class="error-actions">
+            <a class="button button--primary" href="/">Вернуться на главную</a>
+            <a class="button button--ghost" href="/#cta">Подписать коробку заново</a>
+          </div>
+        </div>
+
+        <div class="error-visual" aria-hidden="true">
+          <picture>
+            <source media="(max-width: 767px)" srcset="./assets/cta-box-mobile.png" />
+            <img src="./assets/cta-box-desktop.png" alt="" loading="eager" decoding="async" />
+          </picture>
+          <div class="error-label">
+            <span>404</span>
+            <small>(НЕ КАНТОВАТЬ)</small>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

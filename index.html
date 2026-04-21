@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Переезд из Телеграма в Макс | LiveDune, TargetHunter, Телеграмма Максу</title>
+    <meta name="description" content="Перенос постов и канала из Телеграма в Макс без потерь. Кросспостинг с Телеграммой Максу, аналитика LiveDune и парсинг аудитории TargetHunter. Начни переезд!" />
+    <meta name="robots" content="index, follow" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self';" />
+    <link rel="canonical" href="https://pereezd-v-max.ru/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pereezd-v-max.ru/" />
+    <meta property="og:site_name" content="Бригада переезда" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:title" content="Переезд из Телеграма в Макс — Без паники и потерь" />
+    <meta property="og:description" content="Перенос постов через Телеграмму Максу, аналитика охватов с LiveDune и парсинг аудитории TargetHunter. Кросспостинг Телеграм → Макс легко." />
+    <meta property="og:image" content="https://pereezd-v-max.ru/assets/openg3.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Иллюстрация переезда из Телеграма в Макс" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Переезд из Телеграма в Макс" />
+    <meta name="twitter:description" content="Перевозим контент, аудиторию и статистику. Руки растут откуда надо." />
+    <meta name="twitter:image" content="https://pereezd-v-max.ru/assets/hero-desktop.png" />
+    <meta name="twitter:image:alt" content="Иллюстрация переезда из Телеграма в Макс" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Iansui&family=Inter:wght@400;500;700&family=Unbounded:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="icon" type="image/x-icon" href="./assets/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/favicon/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="./assets/favicon/yandex-touch-icon-120x120.png" />
+    <link rel="manifest" href="./assets/favicon/site.webmanifest" />
+  </head>
+  <body>
+    <main class="page">
+
+      <!-- ─── HERO ─────────────────────────────────────────── -->
+      <section class="hero">
+        <div class="hero__menu-band">
+          <img
+            class="hero__menu-image"
+            src="./assets/menu-band-desktop.svg"
+            alt=""
+            width="1440"
+            height="240"
+          />
+          <div class="hero__menu-row hero__menu-row--primary"></div>
+          <div class="hero__menu-row hero__menu-row--secondary"></div>
+        </div>
+
+        <div class="hero__glow hero__glow--left"></div>
+        <div class="hero__glow hero__glow--right"></div>
+
+        <header class="hero__header">
+          <button class="hero__menu-button" aria-label="Открыть меню">
+            <img src="./assets/icon-menu.svg" alt="" width="32" height="32" />
+          </button>
+        </header>
+
+        <div class="hero__content container container--narrow">
+          <div class="hero__headline-wrap">
+            <span class="hero__badge hero__badge--top">Недорого!</span>
+            <h1 class="hero__title">
+              Переезжаем<br />
+              из&nbsp;Телеграма<br />
+              в&nbsp;Макс
+            </h1>
+            <span class="hero__badge hero__badge--bottom">Не&nbsp;продолбаем!</span>
+          </div>
+
+          <a class="button button--hero" id="hero-cta-button" href="#features">Начать переезд</a>
+        </div>
+
+        <div class="hero__image-wrap">
+          <picture>
+            <source srcset="./assets/hero-desktop.webp" type="image/webp" />
+            <img
+              class="hero__image"
+              src="./assets/hero-desktop.png"
+              alt="Иллюстрация бригады срочного переезда"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+              width="940"
+              height="940"
+            />
+          </picture>
+        </div>
+      </section>
+
+      <!-- ─── INTRO ─────────────────────────────────────────── -->
+      <section class="intro section">
+        <div class="container container--narrow">
+          <h2 class="section-title">На связи бригада срочного переезда!</h2>
+
+          <div class="intro__image-frame">
+            <picture>
+              <source srcset="./assets/intro-desktop.webp" type="image/webp" />
+              <img
+                class="intro__image"
+                src="./assets/intro-desktop.png"
+                alt="Сцена с переносом вещей"
+                loading="lazy"
+                decoding="async"
+                width="1024"
+                height="970"
+              />
+            </picture>
+            <button
+              class="marker marker--one"
+              type="button"
+              data-marker
+              aria-expanded="false"
+              aria-label="Показать подсказку: Телеграмма Максу"
+              style="--popup-width: 201px;"
+            >
+              <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+              <span class="marker__popup">
+                <span class="marker__popup-title">Телеграмма Максу</span>
+                <span class="marker__popup-text">Сделаем все по красоте для вашего новоселья в Максе.</span>
+              </span>
+            </button>
+            <button
+              class="marker marker--two"
+              type="button"
+              data-marker
+              aria-expanded="false"
+              aria-label="Показать подсказку: LiveDune"
+              style="--popup-width: 201px;"
+            >
+              <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+              <span class="marker__popup">
+                <span class="marker__popup-title">LiveDune</span>
+                <span class="marker__popup-text">Руки у нас растут откуда надо, голова на плечах холодная, а сердце горячее.</span>
+              </span>
+            </button>
+            <button
+              class="marker marker--three"
+              type="button"
+              data-marker
+              aria-expanded="false"
+              aria-label="Показать подсказку: TargetHunter"
+              style="--popup-width: 201px;"
+            >
+              <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+              <span class="marker__popup marker__popup--left">
+                <span class="marker__popup-title">TargetHunter</span>
+                <span class="marker__popup-text">Да-да, мы в курсе, что вы вот это все не планировали. Но как пел классик: c'est la vie.</span>
+              </span>
+            </button>
+          </div>
+
+          <div class="intro__copy">
+            <p>
+              <span class="text--desktop">У нас тут три полезных инструмента для быстрого и аккуратного переезда. Ступайте в квартиру и соберите всё самое необходимое.</span>
+              <span class="text--mobile">У нас тут <strong>три полезных инструмента</strong>, чтобы вашу маму и тут и там показывали. Ступайте в квартиру, и соберите все самое необходимое.</span>
+            </p>
+            <label class="intro__check">
+              <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+              <span
+                data-desktop="Сначала самое ценное"
+                data-mobile="Нажмите, чтобы узнать больше"
+                >Сначала самое ценное</span
+              >
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── FEATURES ──────────────────────────────────────── -->
+      <section class="features section section--muted" id="features">
+        <div class="features__grid">
+
+          <!-- Card 1 -->
+          <article class="feature-card" id="feature-card-1">
+            <div class="feature-card__body">
+              <h2 class="feature-card__heading">Коридор. Тут всё начинается</h2>
+              <p>
+                <span class="text--desktop">Документы, техника, аптечка и вещи первой необходимости едут в первую очередь.</span>
+                <span class="text--mobile">Наташа из <strong>Телеграммы</strong> переносит ваш контент из ТГ в Макс — аккуратно, как бабушкин сервиз.</span>
+              </p>
+            </div>
+            <div class="feature-card__media">
+              <div class="feature-card__media-visual">
+                <picture>
+                  <source media="(max-width: 767px)" srcset="./assets/card-1-mobile.png" />
+                  <source srcset="./assets/card-1-desktop.webp" type="image/webp" />
+                  <img
+                    src="./assets/card-1-desktop.png"
+                    alt="Самое ценное"
+                    loading="lazy"
+                    decoding="async"
+                    width="1792"
+                    height="2400"
+                  />
+                </picture>
+              </div>
+              <button
+                class="marker feature-marker"
+                type="button"
+                data-marker
+                aria-expanded="false"
+                aria-label="Показать подсказку: Здравствуйте, так что тут у вас?"
+                style="--marker-top: 34.7%; --marker-left: 45.8%; --popup-width: 281px;"
+              >
+                <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+                <span class="marker__popup marker__popup--above">
+                  <span class="marker__popup-title">Здравствуйте, так что тут у вас?</span>
+                  <span class="marker__popup-text">Сколько надо упаковать контента? Да не переживайте — каждый постик бережно переложим газетками. Где что особенно ценное подпишем «Хрупко».</span>
+                </span>
+              </button>
+              <button
+                class="marker feature-marker"
+                type="button"
+                data-marker
+                aria-expanded="false"
+                aria-label="Показать подсказку: Нет, оставлять тут ничего не надо"
+                style="--marker-top: 63.4%; --marker-left: 26.8%; --popup-width: 242px;"
+              >
+                <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+                <span class="marker__popup marker__popup--above-right">
+                  <span class="marker__popup-text">Нет, оставлять тут ничего не надо. Нет, не плевать, начнем все заново. Вы чего? У вас смотрите какие ценности тут накопились. Это все можно использовать и на новом месте.</span>
+                </span>
+              </button>
+              <button
+                class="marker feature-marker"
+                type="button"
+                data-marker
+                aria-expanded="false"
+                aria-label="Показать подсказку: Глядите, что это тут у нас"
+                style="--marker-top: 57.7%; --marker-left: 83.7%; --popup-width: 248px;"
+              >
+                <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+                <span class="marker__popup marker__popup--left">
+                  <span class="marker__popup-text">Глядите, что это тут у нас? Это же ваш трогательный рассказ 2023 про то, как балетная школа развивает силу воли. Помните, сколько он собрал репостов? А как после него к вам пришел большой заказ на тренинг для команды? Это надо забирать и снова размещать.</span>
+                </span>
+              </button>
+              <button
+                class="marker feature-marker"
+                type="button"
+                data-marker
+                aria-expanded="false"
+                aria-label="Показать подсказку: В руках у Наташи — Телеграмма Максу"
+                style="--marker-top: 72.5%; --marker-left: 58.6%; --popup-width: 253px;"
+              >
+                <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+                <span class="marker__popup marker__popup--above">
+                  <span class="marker__popup-title">В руках у Наташи — «Телеграмма Максу»</span>
+                  <span class="marker__popup-text">Тот самый инструмент, который помогает по-умному перенести ваши посты из Телеграма в Макс. Можно выбрать только топ самых популярных и запланировать их на несколько недель вперед. При этом сервис не постит их сразу скопом, а позволяет отфильтровать по самым популярным и запостить их.</span>
+                </span>
+              </button>
+            </div>
+            <a
+              class="button button--card"
+              href="https://tgmaxu.ru/"
+              target="_blank"
+              rel="noreferrer"
+              data-desktop="Собрать коробку"
+              data-mobile="Посмотреть, как работает"
+              >Собрать коробку</a
+            >
+          </article>
+
+          <!-- Card 2 -->
+          <article class="feature-card feature-card--light">
+            <div class="feature-card__body">
+              <h2 class="feature-card__heading">Кухня. Тут ничего не должно разбиться</h2>
+              <p>
+                <span class="text--desktop">Хрупкое упакуем отдельно, подпишем и довезём без лишнего грохота.</span>
+                <span class="text--mobile">Витя из <strong>LiveDune</strong> следит, чтобы при переезде вы ничего не потеряли — ни охватов, ни нервов.</span>
+              </p>
+            </div>
+            <div class="feature-card__media">
+              <div class="feature-card__media-visual">
+                <picture>
+                  <source media="(max-width: 767px)" srcset="./assets/card-2-mobile.png" />
+                  <source srcset="./assets/card-2-desktop.webp" type="image/webp" />
+                  <img
+                    src="./assets/card-2-desktop.png"
+                    alt="Кухонная коробка"
+                    loading="lazy"
+                    decoding="async"
+                    width="3058"
+                    height="4096"
+                  />
+                </picture>
+              </div>
+              <button
+                class="marker feature-marker"
+                type="button"
+                data-marker
+                aria-expanded="false"
+                aria-label="Показать подсказку: Переезд без аналитики — как переезд без списка коробок"
+                style="--marker-top: 193.594px; --marker-left: 274px; --popup-width: 261px;"
+              >
+                <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+                <span class="marker__popup marker__popup--above-left">
+                  <span class="marker__popup-title">Переезд без аналитики — как переезд без списка коробок</span>
+                  <span class="marker__popup-text">Вроде всё перевезли, но где вилки — непонятно. LiveDune покажет, что работает на новом месте, а что нужно подкрутить.</span>
+                </span>
+              </button>
+              <button
+                class="marker feature-marker"
+                type="button"
+                data-marker
+                aria-expanded="false"
+                aria-label="Показать подсказку: Кросспостинг ТГ → Макс"
+                style="--marker-top: 314.188px; --marker-left: 249px; --popup-width: 202px;"
+              >
+                <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+                <span class="marker__popup marker__popup--left">
+                  <span class="marker__popup-title">Кросспостинг ТГ → Макс</span>
+                  <span class="marker__popup-text">Чтобы не дублировать вручную. Статистика по обоим площадкам в одном окне — чтобы видеть, куда движется аудитория.</span>
+                </span>
+              </button>
+            </div>
+            <a
+              class="button button--card"
+              href="https://livedune.com/"
+              target="_blank"
+              rel="noreferrer"
+              data-desktop="Защитить посуду"
+              data-mobile="Попробовать LiveDune"
+              >Защитить посуду</a
+            >
+          </article>
+
+          <!-- Card 3 — два слоя как в Figma -->
+          <article class="feature-card">
+            <div class="feature-card__body">
+              <h2 class="feature-card__heading">Балкон. Принимайте!</h2>
+              <p>
+                <span class="text--desktop">Габаритное, сезонное и забытое добро не потеряется по дороге и приедет в полном составе.</span>
+                <span class="text--mobile">Саша из <strong>TargetHunter</strong> следит, чтобы аудитория узнала о переезде — и доехала до нового адреса.</span>
+              </p>
+            </div>
+            <div class="feature-card__media feature-card__media--layered">
+              <div class="feature-card__media-visual">
+                <div class="feature-card__layer feature-card__layer--1">
+                  <picture>
+                    <source media="(max-width: 767px)" srcset="./assets/card-3a-mobile.png" />
+                    <source srcset="./assets/card-3a-desktop.webp" type="image/webp" />
+                    <img
+                      src="./assets/card-3a-desktop.png"
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      width="2400"
+                      height="3098"
+                    />
+                  </picture>
+                </div>
+                <div class="feature-card__layer feature-card__layer--2">
+                  <picture>
+                    <source media="(max-width: 767px)" srcset="./assets/card-3b-mobile.png" />
+                    <source srcset="./assets/card-3b-desktop.webp" type="image/webp" />
+                    <img
+                      src="./assets/card-3b-desktop.png"
+                      alt="Балконные вещи"
+                      loading="lazy"
+                      decoding="async"
+                      width="1792"
+                      height="2400"
+                    />
+                  </picture>
+                </div>
+              </div>
+              <button
+                class="marker feature-marker"
+                type="button"
+                data-marker
+                aria-expanded="false"
+                aria-label="Показать подсказку: Переезд без аудитории — это как новоселье без гостей"
+                style="--marker-top: 187px; --marker-left: 238px; --popup-width: 194px;"
+              >
+                <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+                <span class="marker__popup marker__popup--above-left">
+                  <span class="marker__popup-title">Переезд без аудитории — это как новоселье без гостей</span>
+                  <span class="marker__popup-text">Красиво, но одиноко. TargetHunter поможет найти вашу аудиторию на новом месте и позвать её на новоселье.</span>
+                </span>
+              </button>
+              <button
+                class="marker feature-marker"
+                type="button"
+                data-marker
+                aria-expanded="false"
+                aria-label="Показать подсказку: Комментарии, реакции, обратная связь — всё, что превращает пустую квартиру в дом"
+                style="--marker-top: 260px; --marker-left: 303px; --popup-width: 149px;"
+              >
+                <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+                <span class="marker__popup marker__popup--left">
+                  <span class="marker__popup-text">Комментарии, реакции, обратная связь — всё, что превращает пустую квартиру в дом.</span>
+                </span>
+              </button>
+            </div>
+            <a
+              class="button button--card"
+              href="https://targethunter.ru/"
+              target="_blank"
+              rel="noreferrer"
+              data-desktop="Отправить всё сразу"
+              data-mobile="Попробовать TargetHunter"
+              >Отправить всё сразу</a
+            >
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ─── CTA ───────────────────────────────────────────── -->
+      <section class="cta section" id="cta">
+        <div class="container container--narrow">
+          <div class="cta__copy">
+            <h2 class="section-title">Подпиши свою коробку</h2>
+            <p
+              data-desktop="Оставь понятную надпись, чтобы самое важное поехало в правильную комнату без суеты и лишних вопросов."
+              data-mobile="Каждый переезд начинается с надписи маркером на картоне. Выбери готовую или напиши свою."
+            >
+              Оставь понятную надпись, чтобы самое важное поехало в правильную
+              комнату без суеты и лишних вопросов.
+            </p>
+          </div>
+
+          <form class="cta__search" autocomplete="off">
+            <label class="cta__input-wrap">
+              <span class="sr-only">Введите подпись для коробки</span>
+              <input
+                id="box-label-input"
+                type="text"
+                maxlength="96"
+                placeholder="Введите надпись"
+                value=""
+                data-desktop-value=""
+                data-desktop-placeholder="Введите надпись"
+                data-mobile-value=""
+                data-mobile-placeholder="Введите надпись"
+              />
+            </label>
+            <button class="cta__search-button" type="submit" aria-label="Подтвердить подпись">
+              <img src="./assets/icon-arrow.svg" alt="" width="24" height="24" />
+            </button>
+          </form>
+
+          <div class="cta__visual">
+            <picture>
+              <source srcset="./assets/cta-box-desktop.webp" type="image/webp" />
+              <img
+                class="cta__visual-image"
+                src="./assets/cta-box-desktop.png"
+                alt="Коробка с подписью"
+                loading="lazy"
+                decoding="async"
+                width="1372"
+                height="1372"
+              />
+            </picture>
+            <div class="cta__label-note">
+              <span id="box-label-preview">КОНТЕНТ 2020–2024</span>
+              <small id="box-label-preview-secondary">(НЕ КАНТОВАТЬ)</small>
+            </div>
+          </div>
+
+          <button
+            class="button button--hero"
+            id="cta-share-button"
+            type="button"
+            data-desktop="Подтвердить коробку"
+            data-mobile="Поделиться коробкой"
+          >
+            Подтвердить коробку
+          </button>
+          <p class="cta__share-status" id="cta-share-status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <!-- ─── FINAL ──────────────────────────────────────────── -->
+      <section class="final section" id="final">
+        <div class="container container--narrow">
+          <div class="final__copy">
+            <h2 class="section-title section-title--light">Добро пожаловать домой!</h2>
+            <p
+              class="final__subtitle"
+              data-desktop="Финальная разгрузка без хаоса: заносим по комнатам, ставим на место и не теряем темп."
+              data-mobile="Переезд — это не страшно. Особенно когда помогают трое в растянутых футболках."
+            >
+              Финальная разгрузка без хаоса: заносим по комнатам, ставим на
+              место и не теряем темп.
+            </p>
+          </div>
+
+          <div class="final__image-wrap">
+            <picture>
+              <source srcset="./assets/final-desktop.webp" type="image/webp" />
+              <img
+                class="final__image"
+                src="./assets/final-desktop.png"
+                alt="Финальная сцена переезда"
+                loading="lazy"
+                decoding="async"
+                width="1146"
+                height="848"
+              />
+            </picture>
+          </div>
+
+          <div class="final__bottom">
+            <p
+              data-desktop="Пока все остальные мечутся с коробками, у нас всё подписано, отсортировано и доезжает на своих местах."
+              data-mobile="Начните сегодня — и через неделю вы уже будете думать: «И чего я так долго тянул?»"
+            >
+              Пока все остальные мечутся с коробками, у нас всё подписано,
+              отсортировано и доезжает на своих местах.
+            </p>
+
+            <div class="brand">
+              <a href="https://tgmaxu.ru/" target="_blank" rel="noreferrer" aria-label="Открыть tgmaxu.ru">
+                <img
+                  class="brand__asset"
+                  src="./assets/brand-1.svg"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width="32"
+                  height="32"
+                />
+              </a>
+              <a href="https://livedune.com/" target="_blank" rel="noreferrer" aria-label="Открыть livedune.com">
+                <img
+                  class="brand__asset"
+                  src="./assets/brand-2.svg"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width="32"
+                  height="32"
+                />
+              </a>
+              <a href="https://targethunter.ru/" target="_blank" rel="noreferrer" aria-label="Открыть targethunter.ru">
+                <img
+                  class="brand__asset brand__asset--wordmark"
+                  src="./assets/brand-3.svg"
+                  alt="Логотип сервиса"
+                  loading="lazy"
+                  decoding="async"
+                  width="32"
+                  height="36"
+                />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

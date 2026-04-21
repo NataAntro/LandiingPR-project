@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 1440 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Menu Container">
+<path id="Rectangle 36458" d="M0 40H1440L0 0V40Z" fill="var(--fill-0, #6476B6)"/>
+<g id="Menu Item 1">
+<rect width="1440" height="120" transform="translate(0 40)" fill="#6476B6"/>
+</g>
+<g id="Menu Item 2">
+<rect width="1440" height="80" transform="translate(0 160)" fill="white"/>
+</g>
+</g>
+</svg>
