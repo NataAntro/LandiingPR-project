@@ -247,27 +247,33 @@ input {
 .hero__badge {
   position: absolute;
   display: inline-flex;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  padding: 5.82px;
+  height: 31.6364px;
+  padding: 0;
   border-radius: 5.82px;
   background: var(--brand-soft);
   color: rgba(255, 255, 255, 0.5);
   font-family: "Inter", sans-serif;
   font-size: 20px;
+  font-weight: 400;
   line-height: 1;
   white-space: nowrap;
+  transform-origin: top left;
 }
 
 .hero__badge--top {
   top: -16.5469px;
   left: 290.4355px;
+  width: 114.636px;
   transform: rotate(5deg);
 }
 
 .hero__badge--bottom {
   top: 169.9141px;
   left: 62.7773px;
+  width: 174.636px;
   transform: rotate(12deg);
 }
 

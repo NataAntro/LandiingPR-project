@@ -65,7 +65,7 @@
 | `1:476` | menu item 2 | `375 x 80`, local `(0, 160)` в 1:473 | fill `#ffffff` |
 | `1:477` | content container | `343 x 233`, local `(16, 92)` | wraps title + CTA |
 | `1:478` | title container | `343 x 132`, local `(0, 0)` в 1:477 | group export becomes `343 x 178` because stickers overflow; do not use that group export for layout |
-| `1:479` | title | `343 x 132`, local `(0, 0)` в 1:478 | Unbounded Bold 40px, lineHeightPx 44, white, CENTER; text: `"Трезвые переносчики в Макс"` (без слешей) |
+| `1:479` | title | `343 x 132`, local `(0, 0)` в 1:478 | Unbounded Bold 40px, lineHeightPx 44, white, CENTER; text: `"Трезвые перевозчики в Макс"` (без слешей) |
 | `1:480` | slogan container "Не продолбаем!" | `121.952 x 46.469`, local `(44.496, 113.477)` в 1:478 | fill `#6476b6`, radius `4`, 4px padding; overflow ниже title container; Inter Regular 14px white |
 | `1:482` | price container "Недорого!" | `80.617 x 28.802`, local `(227.918, -18)` в 1:478 | fill `#6476b6`, radius `4`, 4px padding; overflow выше title container на 18px; Inter Regular 14px white |
 | `1:484` | CTA container | `343 x 53`, local `(0, 180)` в 1:477 | gap от title container = 48px |
@@ -208,7 +208,7 @@ Implementation note for current landing:
 
 ### Desktop text set
 
-- `1:567` `Трезвые / переносчики / в Макс`
+- `1:567` `Трезвые / перевозчики / в Макс`
 - `1:569` `Не продолбаем!`
 - `1:571` `Недорого!`
 - `I1:572;785:4056` `Начать переезд`
@@ -236,7 +236,7 @@ Implementation note for current landing:
 
 ### Mobile text set
 
-- `1:479` `Трезвые переносчики в Макс` (без слешей; в HTML — `<br>` между строками)
+- `1:479` `Трезвые перевозчики в Макс` (без слешей; в HTML — `<br>` между строками)
 - `1:481` `Не продолбаем!`
 - `1:483` `Недорого!`
 - `I1:486;785:4056` `Начать переезд` — Unbounded Bold 14px, lineHeightPx 21, white, CENTER; 145×21 в кнопке 327px
