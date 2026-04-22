@@ -114,6 +114,10 @@
 - CTA input text `1:621`: `КОНТЕНТ 2020–2024`
 - CTA box text `1:627`: `КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)` (единая строка без слеша; перенос на вторую строку происходит автоматически в рамке 306px при Caveat 22px)
 - CTA bottom button `I1:628;785:4056`: `Подтвердить коробку`
+- Runtime override in current landing implementation:
+  - desktop input uses placeholder `Введите надпись` and starts empty; do not prefill the field with `1:621`
+  - desktop box container keeps the Figma background `#f2f3f6`
+  - desktop box label is intentionally enlarged to `Caveat Bold 30px`; mobile remains `22px`
 - Final title `1:632`: `Добро пожаловать домой!`
 - Final subtitle `1:633`: `Финальная разгрузка без хаоса: заносим по комнатам, ставим на место и не теряем темп.`
 - Final body `1:636`: `Пока все остальные мечутся с коробками, у нас всё подписано, отсортировано и доезжает на своих местах.`
@@ -250,6 +254,10 @@
 - Search button export `1:622`: exact `48 x 48` SVG, background `#6678B6`, white icon
 - Divider image `1:626`: `600 x 600`, radius `32`
 - Bottom button `1:628`: `600 x 53`, fill `#243888`, radius `56`
+- Current landing override relative to Figma:
+  - desktop input placeholder is `Введите надпись`
+  - desktop input initial value is empty
+  - desktop handwritten label on the box is rendered at `30px`, not `22px`
 
 ### Mobile CTA `1:528`
 
@@ -302,6 +310,10 @@
   - не подтверждено MCP
 - Любые значения, выведенные только по PNG-экспорту или визуальному сравнению
   - удалены как неподтвержденные
+- Для CTA desktop нельзя автоматически переносить текстовое наполнение узла `1:621` в initial value поля ввода
+  - в текущей реализации source of truth: пустое поле + placeholder `Введите надпись`
+- Для CTA desktop нельзя использовать `Caveat 22px` как runtime-значение подписи на коробке
+  - в текущей реализации source of truth: `30px` на desktop и `22px` на mobile
 
 ## Практический вывод
 

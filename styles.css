@@ -783,6 +783,7 @@ input {
   border-radius: 32px;
   overflow: hidden;
   padding: 0 19px;
+  background: var(--surface);
 }
 
 .cta__visual > picture {
@@ -798,7 +799,7 @@ input {
   object-fit: cover;
 }
 
-/* Figma: Caveat Bold 22px, centered on the box, no rotation */
+/* Desktop: enlarge the handwritten label while keeping mobile at Figma size */
 .cta__label-note {
   position: absolute;
   top: 50%;
@@ -813,7 +814,7 @@ input {
   color: var(--brand);
   font-family: "Caveat", cursive;
   font-weight: 700;
-  font-size: 22px;
+  font-size: 30px;
   line-height: 1.2;
   text-align: center;
   pointer-events: none;
@@ -822,7 +823,7 @@ input {
 .cta__label-note small {
   font-family: "Caveat", cursive;
   font-weight: 700;
-  font-size: 22px;
+  font-size: 30px;
   line-height: 1.2;
 }
 

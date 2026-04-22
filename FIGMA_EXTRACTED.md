@@ -160,6 +160,11 @@
 | `1:627` | box text | `306 x 52` | `Caveat Bold 22`, fill `#243888`, center |
 | `1:628` | button | `600 x 53` | fill `#243888`, radius `56` |
 
+Implementation note for current landing:
+- desktop input is intentionally rendered empty with placeholder `Введите надпись`
+- desktop box label is intentionally rendered at `Caveat Bold 30px`
+- mobile CTA keeps the Figma text behavior and `22px` label size
+
 ### Mobile CTA `1:528`
 
 | Node | Name | Size / Position | Properties |
@@ -224,6 +229,7 @@
 - `1:621` `КОНТЕНТ 2020–2024`
 - `1:627` `КОНТЕНТ 2020–2024 / (НЕ КАНТОВАТЬ)`
 - `I1:628;785:4056` `Подтвердить коробку`
+- Current landing override for desktop CTA: input starts empty with placeholder `Введите надпись`; box label font size is `30px`
 - `1:632` `Добро пожаловать домой!`
 - `1:633` `Финальная разгрузка без хаоса: заносим по комнатам, ставим на место и не теряем темп.`
 - `1:636` `Пока все остальные мечутся с коробками, у нас всё подписано, отсортировано и доезжает на своих местах.`
