@@ -491,6 +491,7 @@ input {
   font-size: 12px;
   font-weight: 700;
   line-height: 18px;
+  letter-spacing: -0.01em;
   color: var(--white);
 }
 
@@ -499,6 +500,7 @@ input {
   font-size: 12px;
   font-weight: 400;
   line-height: 18px;
+  letter-spacing: -0.01em;
   color: var(--white);
 }
 
@@ -969,8 +971,10 @@ input {
 /* ─── Mobile breakpoint ──────────────────────────────────── */
 @media (max-width: 767px) {
   :root {
-    --content-width: 343px;
-    --hero-mobile-content-width: min(343px, calc(100vw - 32px));
+    --content-width: calc(100vw - 32px);
+    --mobile-frame: 100vw;
+    --mobile-content: calc(100vw - 32px);
+    --hero-mobile-content-width: calc(100vw - 32px);
     --hero-mobile-title-height: calc(var(--hero-mobile-content-width) * 132 / 343);
     --hero-mobile-button-height: calc(var(--hero-mobile-content-width) * 53 / 343);
     --hero-mobile-gap: calc(var(--hero-mobile-content-width) * 48 / 343);
@@ -992,7 +996,7 @@ input {
 
   .container,
   .container--narrow {
-    width: 343px;
+    width: var(--mobile-content);
   }
 
   /* Hero */
@@ -1135,8 +1139,8 @@ input {
 
   /* Figma mobile: без border-radius, edge-to-edge */
   .intro__image-frame {
-    width: 375px;
-    height: 327.405px;
+    width: var(--mobile-frame);
+    height: calc(100vw * 327.405 / 375);
     margin-top: 0;
   }
 
@@ -1150,18 +1154,18 @@ input {
   }
 
   .marker--one {
-    top: 96px;
-    left: 73px;
+    top: calc(100vw * 96 / 375);
+    left: calc(100vw * 73 / 375);
   }
 
   .marker--two {
-    top: 96px;
-    left: 188px;
+    top: calc(100vw * 96 / 375);
+    left: calc(100vw * 188 / 375);
   }
 
   .marker--three {
-    top: 96px;
-    left: 277px;
+    top: calc(100vw * 96 / 375);
+    left: calc(100vw * 277 / 375);
   }
 
   .intro__copy {
@@ -1170,7 +1174,7 @@ input {
   }
 
   .intro__copy p {
-    width: 343px;
+    width: var(--mobile-content);
     min-height: 84px;
   }
 
@@ -1184,7 +1188,7 @@ input {
   }
 
   .features__grid {
-    width: 375px;
+    width: var(--mobile-frame);
     grid-template-columns: 1fr;
     gap: 0;
   }
@@ -1205,27 +1209,27 @@ input {
   }
 
   .feature-card__body {
-    width: 343px;
+    width: var(--mobile-content);
     min-height: 0;
   }
 
   .feature-card__body p {
-    width: 343px;
+    width: var(--mobile-content);
   }
 
   .feature-card__media {
-    width: 343px;
+    width: var(--mobile-content);
   }
 
   .feature-card__media-visual > img,
   .feature-card__media-visual > picture > img,
   .feature-card__media-visual > picture img {
-    height: 460px;
+    height: calc(var(--mobile-content) * 460 / 343);
   }
 
 
   .feature-card__media--layered {
-    width: 343px;
+    width: var(--mobile-content);
   }
 
   /* CTA */
@@ -1243,12 +1247,12 @@ input {
   }
 
   .cta__copy p {
-    width: 343px;
+    width: var(--mobile-content);
     min-height: 63px;
   }
 
   .cta__search {
-    width: 343px;
+    width: var(--mobile-content);
   }
 
   .cta__input-wrap {
@@ -1262,24 +1266,24 @@ input {
   }
 
   .cta__visual {
-    width: 343px;
-    height: 343px;
+    width: var(--mobile-content);
+    height: var(--mobile-content);
   }
 
   .cta__copy .section-title {
-    width: 306px;
+    width: calc(var(--mobile-content) * 306 / 343);
     align-self: center;
   }
 
   /* Figma mobile: Caveat Bold 22px, centered on the box */
   .cta__label-note {
-    width: 306px;
-    font-size: 22px;
+    width: calc(var(--mobile-content) * 306 / 343);
+    font-size: calc(var(--mobile-content) * 22 / 343);
     line-height: 1.2;
   }
 
   .cta__label-note small {
-    font-size: 22px;
+    font-size: calc(var(--mobile-content) * 22 / 343);
     line-height: 1.2;
   }
 
@@ -1291,36 +1295,36 @@ input {
 
   .final .container--narrow {
     gap: 0;
-    width: 375px;
+    width: var(--mobile-frame);
   }
 
   .final__copy {
-    width: 343px;
+    width: var(--mobile-content);
     margin: 0 auto;
     gap: 12px;
   }
 
   .final__subtitle,
   .final__bottom p {
-    width: 343px;
+    width: var(--mobile-content);
     margin-inline: auto;
     white-space: normal;
   }
 
   /* Figma mobile: edge-to-edge, без border-radius */
   .final__image-wrap {
-    width: 375px;
+    width: var(--mobile-frame);
     max-width: none;
     margin-top: 0;
     border-radius: 0;
   }
 
   .final__image {
-    height: 360px;
+    height: calc(100vw * 360 / 375);
   }
 
   .final__bottom {
-    width: 343px;
+    width: var(--mobile-content);
     gap: 16px;
     margin: 0 auto;
     padding-top: 0;

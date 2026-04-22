@@ -22,6 +22,28 @@
 - `get_grid`
 - `get_image_from_node`
 
+## Правила fluid-масштабирования мобильного макета (2026-04-22)
+
+Figma Mobile frame = 375px (iPhone SE). На более широких мобильных экранах (iPhone 14 = 390, Pro Max = 430) раньше появлялись боковые отступы, потому что контент был жестко зафиксирован на 343/375px.
+
+Теперь в `@media (max-width: 767px)`:
+
+- `--mobile-frame: 100vw` — для edge-to-edge блоков (было `375px`): `.intro__image-frame`, `.features__grid`, `.final .container--narrow`, `.final__image-wrap`.
+- `--mobile-content: calc(100vw - 32px)` — для контента с 16px боковыми полями (было `343px`): `.container`, `.container--narrow`, `.hero__content`, `.intro__copy p`, `.feature-card__body`, `.feature-card__media`, `.cta__copy p`, `.cta__search`, `.cta__visual`, `.final__copy`, `.final__subtitle`, `.final__bottom`.
+- `--hero-mobile-content-width: calc(100vw - 32px)` — без `min(343px, …)`, чтобы формулы `calc(var(--hero-mobile-content-width) * N / 343)` естественно масштабировались на более широких экранах.
+
+Правило для новых мобильных правил:
+- Размеры, которые в Figma привязаны к 375px (edge-to-edge), писать как `calc(100vw * N / 375)`.
+- Размеры/позиции внутри 343px-контента — как `calc(var(--mobile-content) * N / 343)`.
+- Абсолютные координаты внутри image-frame (маркеры, бейджи) — тоже масштабировать пропорционально.
+
+Проверено: 375 сохраняет точные значения Figma (343 / 375 / -56 / 480); 390 → 358/390; 430 → 398/430 без горизонтального скролла.
+
+### Сохраненные уточнения (НЕ перезаписывать при 1:1-выравнивании)
+- CTA input: `placeholder="Введите надпись"` + пустое value на desktop и mobile.
+- CTA box label: desktop 30px (Caveat Bold), mobile масштабируется от 22px через `calc(var(--mobile-content) * 22 / 343)`.
+- `.marker__popup-title/-text`: `letter-spacing: -0.01em` — компенсирует разницу рендера Google Inter vs Figma Inter (2 тултипа ранее ломались по переносам).
+
 ## Главное правило для дальнейшей работы
 
 Если `scan_text_nodes` и верхнеуровневый `style` у mixed-text узла противоречат `get_styled_text_segments`, считать источником истины `get_styled_text_segments`.
