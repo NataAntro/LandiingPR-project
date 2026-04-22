@@ -716,6 +716,10 @@ input {
   width: 100%;
 }
 
+#cta-title {
+  scroll-margin-top: 20px;
+}
+
 .cta__copy p {
   margin: 0;
   color: var(--ink);

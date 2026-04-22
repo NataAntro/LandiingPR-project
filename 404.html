@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>404 — Коробка потерялась</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        base-uri 'self';
+        object-src 'none';
+        frame-src 'none';
+        form-action 'self';
+        img-src 'self' data:;
+        font-src 'self' https://fonts.gstatic.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        script-src 'self';
+        connect-src 'none';
+      "
+    />
+    <script src="./head-protection.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -305,7 +321,7 @@
           </p>
           <div class="error-actions">
             <a class="button button--primary" href="/">Вернуться на главную</a>
-            <a class="button button--ghost" href="/#cta">Подписать коробку заново</a>
+            <a class="button button--ghost" href="/#cta-title">Подписать коробку заново</a>
           </div>
         </div>
 

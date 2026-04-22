@@ -6,8 +6,24 @@
     <title>Переезд из Телеграма в Макс | LiveDune, TargetHunter, Телеграмма Максу</title>
     <meta name="description" content="Перенос постов и канала из Телеграма в Макс без потерь. Кросспостинг с Телеграммой Максу, аналитика LiveDune и парсинг аудитории TargetHunter. Начни переезд!" />
     <meta name="robots" content="index, follow" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self';" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        base-uri 'self';
+        object-src 'none';
+        frame-src 'none';
+        form-action 'self';
+        img-src 'self' data:;
+        font-src 'self' https://fonts.gstatic.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        script-src 'self';
+        connect-src 'none';
+        manifest-src 'self';
+      "
+    />
     <link rel="canonical" href="https://trezvyeperevozchikivmax.online/" />
+    <script src="./head-protection.js"></script>
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -508,7 +524,7 @@
       <section class="cta section" id="cta">
         <div class="container container--narrow">
           <div class="cta__copy">
-            <h2 class="section-title">Подпиши свою коробку</h2>
+            <h2 class="section-title" id="cta-title">Подпиши свою коробку</h2>
             <p
               data-desktop="Оставь понятную надпись, чтобы самое важное поехало в правильную комнату без суеты и лишних вопросов."
               data-mobile="Каждый переезд начинается с надписи маркером на картоне. Выбери готовую или напиши свою."
