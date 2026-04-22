@@ -67,6 +67,7 @@ input {
 /* ─── Layout ─────────────────────────────────────────────── */
 .page {
   width: 100%;
+  overflow-x: clip;
 }
 
 .section {
@@ -977,13 +978,16 @@ input {
 /* ─── Mobile breakpoint ──────────────────────────────────── */
 @media (max-width: 767px) {
   :root {
-    --content-width: calc(100vw - 32px);
-    --mobile-frame: 100vw;
-    --mobile-content: calc(100vw - 32px);
-    --hero-mobile-content-width: calc(100vw - 32px);
-    --hero-mobile-title-height: calc(var(--hero-mobile-content-width) * 132 / 343);
-    --hero-mobile-button-height: calc(var(--hero-mobile-content-width) * 53 / 343);
-    --hero-mobile-gap: calc(var(--hero-mobile-content-width) * 48 / 343);
+    --mobile-max-width: 480px;
+    --mobile-side-gap: clamp(12px, 4.267vw, 24px);
+    --content-width: min(calc(100vw - (var(--mobile-side-gap) * 2)), calc(var(--mobile-max-width) - (var(--mobile-side-gap) * 2)));
+    --mobile-frame: min(100%, var(--mobile-max-width));
+    --mobile-content: var(--content-width);
+    --hero-mobile-content-width: var(--mobile-content);
+    --hero-mobile-title-width: min(var(--hero-mobile-content-width), 343px);
+    --hero-mobile-title-height: calc(var(--hero-mobile-title-width) * 132 / 343);
+    --hero-mobile-button-height: calc(var(--hero-mobile-title-width) * 53 / 343);
+    --hero-mobile-gap: calc(var(--hero-mobile-title-width) * 48 / 343);
   }
 
   /* Responsive copy: показываем мобильные версии текста */
@@ -1002,12 +1006,13 @@ input {
 
   .container,
   .container--narrow {
-    width: var(--mobile-content);
+    width: min(100%, var(--mobile-max-width));
+    padding-inline: var(--mobile-side-gap);
   }
 
   /* Hero */
   .hero {
-    min-height: 720px;
+    min-height: calc(92px + (var(--hero-mobile-content-width) * 660 / 343) + env(safe-area-inset-bottom, 0px));
   }
 
   .hero__menu-band {
@@ -1034,7 +1039,7 @@ input {
   }
 
   .hero__headline-wrap {
-    width: var(--hero-mobile-content-width);
+    width: var(--hero-mobile-title-width);
     height: var(--hero-mobile-title-height);
     padding-top: 0;
     overflow: visible;
@@ -1045,28 +1050,30 @@ input {
     z-index: 1;
     width: 100%;
     height: 100%;
-    font-size: calc(var(--hero-mobile-content-width) * 40 / 343);
-    line-height: calc(var(--hero-mobile-content-width) * 44 / 343);
+    font-size: clamp(30px, calc(var(--hero-mobile-title-width) * 40 / 343), 40px);
+    line-height: clamp(34px, calc(var(--hero-mobile-title-width) * 44 / 343), 44px);
+    letter-spacing: -0.03em;
   }
 
   .hero__badge-mobile-art {
     position: absolute;
     display: block;
+    z-index: 2;
     max-width: none;
   }
 
   .hero__badge-mobile-art--top {
-    top: calc(var(--hero-mobile-content-width) * -18 / 343);
-    left: calc(var(--hero-mobile-content-width) * 227.918 / 343);
-    width: calc(var(--hero-mobile-content-width) * 81 / 343);
-    height: calc(var(--hero-mobile-content-width) * 29 / 343);
+    top: calc(var(--hero-mobile-title-width) * -18 / 343);
+    left: calc(var(--hero-mobile-title-width) * 227.918 / 343);
+    width: calc(var(--hero-mobile-title-width) * 81 / 343);
+    height: calc(var(--hero-mobile-title-width) * 29 / 343);
   }
 
   .hero__badge-mobile-art--bottom {
-    top: calc(var(--hero-mobile-content-width) * 113.4766 / 343);
-    left: calc(var(--hero-mobile-content-width) * 44.4961 / 343);
-    width: calc(var(--hero-mobile-content-width) * 122 / 343);
-    height: calc(var(--hero-mobile-content-width) * 47 / 343);
+    top: calc(var(--hero-mobile-title-width) * 113.4766 / 343);
+    left: calc(var(--hero-mobile-title-width) * 44.4961 / 343);
+    width: calc(var(--hero-mobile-title-width) * 122 / 343);
+    height: calc(var(--hero-mobile-title-width) * 47 / 343);
   }
 
   .hero__badge {
@@ -1093,7 +1100,7 @@ input {
 
   /* Figma mobile: 375px frame => x -56px, y 272px; keep that offset relative to viewport center */
   .hero__image-wrap {
-    top: calc(92px + var(--hero-mobile-content-width) * 180 / 343);
+    top: calc(92px + var(--hero-mobile-title-width) * 180 / 343);
     left: calc(50% - var(--hero-mobile-content-width) * 243.5 / 343);
     width: calc(var(--hero-mobile-content-width) * 480 / 343);
     height: calc(var(--hero-mobile-content-width) * 480 / 343);
@@ -1130,8 +1137,8 @@ input {
 
   /* Intro */
   .intro {
-    min-height: 615.405px;
-    padding: 48px 0 0;
+    min-height: auto;
+    padding: 48px 0 48px;
   }
 
   .intro .container--narrow {
@@ -1145,9 +1152,11 @@ input {
 
   /* Figma mobile: без border-radius, edge-to-edge */
   .intro__image-frame {
-    width: var(--mobile-frame);
-    height: calc(100vw * 327.405 / 375);
+    width: calc(100% + (var(--mobile-side-gap) * 2));
+    height: auto;
+    margin-inline: calc(var(--mobile-side-gap) * -1);
     margin-top: 0;
+    aspect-ratio: 375 / 327.405;
   }
 
   .intro__image {
@@ -1160,18 +1169,18 @@ input {
   }
 
   .marker--one {
-    top: calc(100vw * 96 / 375);
-    left: calc(100vw * 73 / 375);
+    top: 29.3211%;
+    left: 19.4667%;
   }
 
   .marker--two {
-    top: calc(100vw * 96 / 375);
-    left: calc(100vw * 188 / 375);
+    top: 29.3211%;
+    left: 50.1333%;
   }
 
   .marker--three {
-    top: calc(100vw * 96 / 375);
-    left: calc(100vw * 277 / 375);
+    top: 29.3211%;
+    left: 73.8667%;
   }
 
   .intro__copy {
@@ -1180,8 +1189,8 @@ input {
   }
 
   .intro__copy p {
-    width: var(--mobile-content);
-    min-height: 84px;
+    width: 100%;
+    min-height: 0;
   }
 
   .intro__check {
@@ -1194,15 +1203,16 @@ input {
   }
 
   .features__grid {
-    width: var(--mobile-frame);
+    width: min(100%, var(--mobile-max-width));
     grid-template-columns: 1fr;
     gap: 0;
+    margin: 0 auto;
   }
 
   .feature-card {
     gap: 16px;
     min-height: 0;
-    padding: 48px 16px;
+    padding: 48px var(--mobile-side-gap);
     background: var(--surface);
   }
 
@@ -1215,37 +1225,85 @@ input {
   }
 
   .feature-card__body {
-    width: var(--mobile-content);
+    width: 100%;
     min-height: 0;
   }
 
   .feature-card__body p {
-    width: var(--mobile-content);
+    width: 100%;
   }
 
   .feature-card__media {
-    width: var(--mobile-content);
+    width: 100%;
+  }
+
+  .feature-card__media-visual {
+    position: relative;
+    aspect-ratio: 343 / 460;
   }
 
   .feature-card__media-visual > img,
   .feature-card__media-visual > picture > img,
   .feature-card__media-visual > picture img {
-    height: calc(var(--mobile-content) * 460 / 343);
+    height: 100%;
   }
 
+  .feature-card--light .feature-card__media-visual > picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .feature-card--light .feature-card__media-visual > picture > img,
+  .feature-card--light .feature-card__media-visual > picture img {
+    position: absolute;
+    top: -13.5666%;
+    left: 0.0528%;
+    width: 113.6442%;
+    height: auto;
+    margin-top: 0;
+    margin-left: 0;
+    max-width: none;
+  }
 
   .feature-card__media--layered {
-    width: var(--mobile-content);
+    width: 100%;
+  }
+
+  .feature-card__media--layered .feature-card__media-visual {
+    height: auto;
+    aspect-ratio: 343 / 460;
+  }
+
+  .feature-card--light .feature-marker:nth-of-type(1) {
+    --marker-top: 42.0857% !important;
+    --marker-left: 79.8834% !important;
+  }
+
+  .feature-card--light .feature-marker:nth-of-type(2) {
+    --marker-top: 68.3017% !important;
+    --marker-left: 72.5948% !important;
+  }
+
+  .feature-card:nth-child(3) .feature-marker:nth-of-type(1) {
+    --marker-top: 40.6522% !important;
+    --marker-left: 69.3878% !important;
+  }
+
+  .feature-card:nth-child(3) .feature-marker:nth-of-type(2) {
+    --marker-top: 56.5217% !important;
+    --marker-left: 88.3382% !important;
   }
 
   /* CTA */
   .cta {
-    min-height: 737px;
+    min-height: auto;
     padding: 48px 0;
   }
 
   .cta .container--narrow {
     gap: 16px;
+    align-items: stretch;
   }
 
   .cta__copy {
@@ -1253,12 +1311,12 @@ input {
   }
 
   .cta__copy p {
-    width: var(--mobile-content);
-    min-height: 63px;
+    width: 100%;
+    min-height: 0;
   }
 
   .cta__search {
-    width: var(--mobile-content);
+    width: 100%;
   }
 
   .cta__input-wrap {
@@ -1267,13 +1325,14 @@ input {
   }
 
   .cta__input-wrap input {
-    width: 255px;
+    width: 100%;
     max-width: 100%;
   }
 
   .cta__visual {
-    width: var(--mobile-content);
-    height: var(--mobile-content);
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
   }
 
   .cta__copy .section-title {
@@ -1291,46 +1350,48 @@ input {
   .cta__label-note small {
     font-size: calc(var(--mobile-content) * 22 / 343);
     line-height: 1.2;
+    white-space: pre-line;
   }
 
   /* Final */
   .final {
-    min-height: 670px;
-    padding: 48px 0 60px;
+    min-height: auto;
+    padding: 48px 0 calc(60px + env(safe-area-inset-bottom, 0px));
   }
 
   .final .container--narrow {
     gap: 0;
-    width: var(--mobile-frame);
   }
 
   .final__copy {
-    width: var(--mobile-content);
+    width: 100%;
     margin: 0 auto;
     gap: 12px;
   }
 
   .final__subtitle,
   .final__bottom p {
-    width: var(--mobile-content);
+    width: 100%;
     margin-inline: auto;
     white-space: normal;
   }
 
   /* Figma mobile: edge-to-edge, без border-radius */
   .final__image-wrap {
-    width: var(--mobile-frame);
+    width: calc(100% + (var(--mobile-side-gap) * 2));
     max-width: none;
+    margin-inline: calc(var(--mobile-side-gap) * -1);
     margin-top: 0;
     border-radius: 0;
   }
 
   .final__image {
-    height: calc(100vw * 360 / 375);
+    height: auto;
+    aspect-ratio: 375 / 360;
   }
 
   .final__bottom {
-    width: var(--mobile-content);
+    width: 100%;
     gap: 16px;
     margin: 0 auto;
     padding-top: 0;

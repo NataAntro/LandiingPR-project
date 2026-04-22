@@ -14,6 +14,12 @@ const markers = Array.from(document.querySelectorAll("[data-marker]"));
 const adaptiveCopyNodes = document.querySelectorAll("[data-mobile]");
 const mobileBreakpoint = window.matchMedia("(max-width: 767px)");
 const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
+const mobileBoxLabelBreakOverrides = {
+  "ОХВАТЫ (БЫЛО 10К, СТАЛО 300, НО МЫ ВЕРИМ)": {
+    primary: "ОХВАТЫ",
+    secondary: "(БЫЛО 10К, СТАЛО 300,\nНО МЫ ВЕРИМ)",
+  },
+};
 const boxLabelOptions = [
   "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)",
   "ПОДПИСЧИКИ (ЧАСТЬ ПРИБУДЕТ ПОЗЖЕ)",
@@ -38,6 +44,11 @@ const splitBoxLabelForPreview = (value) => {
 
   if (!trimmedValue) {
     return defaultBoxLabelPreview;
+  }
+
+  if (mobileBreakpoint.matches && mobileBoxLabelBreakOverrides[trimmedValue]) {
+    const override = mobileBoxLabelBreakOverrides[trimmedValue];
+    return [override.primary, override.secondary];
   }
 
   const bracketIndex = trimmedValue.indexOf(" (");
@@ -173,56 +184,61 @@ const buildCanvasFont = (styles, fontSize) => {
 };
 
 const wrapTextLine = (ctx, text, maxWidth) => {
-  const normalizedText = text.trim().replace(/\s+/g, " ");
+  const normalizedParagraphs = text
+    .split("\n")
+    .map((paragraph) => paragraph.trim().replace(/\s+/g, " "))
+    .filter(Boolean);
 
-  if (!normalizedText) {
+  if (normalizedParagraphs.length === 0) {
     return [];
   }
 
-  const words = normalizedText.split(" ");
-  const lines = [];
-  let currentLine = "";
+  return normalizedParagraphs.flatMap((paragraph) => {
+    const words = paragraph.split(" ");
+    const lines = [];
+    let currentLine = "";
 
-  words.forEach((word) => {
-    const candidateLine = currentLine ? `${currentLine} ${word}` : word;
+    words.forEach((word) => {
+      const candidateLine = currentLine ? `${currentLine} ${word}` : word;
 
-    if (ctx.measureText(candidateLine).width <= maxWidth) {
-      currentLine = candidateLine;
-      return;
-    }
-
-    if (currentLine) {
-      lines.push(currentLine);
-      currentLine = "";
-    }
-
-    if (ctx.measureText(word).width <= maxWidth) {
-      currentLine = word;
-      return;
-    }
-
-    let fragment = "";
-
-    Array.from(word).forEach((character) => {
-      const candidateFragment = `${fragment}${character}`;
-
-      if (fragment && ctx.measureText(candidateFragment).width > maxWidth) {
-        lines.push(fragment);
-        fragment = character;
+      if (ctx.measureText(candidateLine).width <= maxWidth) {
+        currentLine = candidateLine;
         return;
       }
 
-      fragment = candidateFragment;
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = "";
+      }
+
+      if (ctx.measureText(word).width <= maxWidth) {
+        currentLine = word;
+        return;
+      }
+
+      let fragment = "";
+
+      Array.from(word).forEach((character) => {
+        const candidateFragment = `${fragment}${character}`;
+
+        if (fragment && ctx.measureText(candidateFragment).width > maxWidth) {
+          lines.push(fragment);
+          fragment = character;
+          return;
+        }
+
+        fragment = candidateFragment;
+      });
+
+      currentLine = fragment;
     });
 
-    currentLine = fragment;
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines;
   });
-
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-
-  return lines;
 };
 
 const getExportFileName = () => {
