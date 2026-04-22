@@ -13,6 +13,7 @@ const firstFeatureCard = document.querySelector("#feature-card-1");
 const markers = Array.from(document.querySelectorAll("[data-marker]"));
 const adaptiveCopyNodes = document.querySelectorAll("[data-mobile]");
 const mobileBreakpoint = window.matchMedia("(max-width: 767px)");
+const popupViewportGap = 12;
 const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
 const mobileBoxLabelBreakOverrides = {
   "ОХВАТЫ (БЫЛО 10К, СТАЛО 300, НО МЫ ВЕРИМ)": {
@@ -132,12 +133,55 @@ const syncLabelPreview = () => {
   previewSecondary.textContent = secondaryText;
 };
 
+const resetMarkerPopupFit = (marker) => {
+  const popup = marker?.querySelector(".marker__popup");
+
+  if (!popup) return;
+
+  popup.style.setProperty("--popup-shift-x", "0px");
+};
+
+const fitMarkerPopup = (marker) => {
+  const popup = marker?.querySelector(".marker__popup");
+
+  if (!popup) return;
+
+  resetMarkerPopupFit(marker);
+
+  const popupRect = popup.getBoundingClientRect();
+  const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+  const viewportOffsetLeft = window.visualViewport?.offsetLeft ?? 0;
+  const minLeft = viewportOffsetLeft + popupViewportGap;
+  const maxRight = viewportOffsetLeft + viewportWidth - popupViewportGap;
+  let shiftX = 0;
+
+  if (popupRect.left < minLeft) {
+    shiftX = minLeft - popupRect.left;
+  } else if (popupRect.right > maxRight) {
+    shiftX = maxRight - popupRect.right;
+  }
+
+  popup.style.setProperty("--popup-shift-x", `${shiftX.toFixed(2)}px`);
+};
+
+const fitOpenMarkerPopups = () => {
+  markers.forEach((marker) => {
+    if (marker.classList.contains("is-active")) {
+      fitMarkerPopup(marker);
+      return;
+    }
+
+    resetMarkerPopupFit(marker);
+  });
+};
+
 const closeMarkers = (exceptMarker) => {
   markers.forEach((marker) => {
     if (marker === exceptMarker) return;
 
     marker.classList.remove("is-active");
     marker.setAttribute("aria-expanded", "false");
+    resetMarkerPopupFit(marker);
   });
 };
 
@@ -515,6 +559,14 @@ if (heroCtaButton && featuresSection && firstFeatureCard) {
 }
 
 markers.forEach((marker) => {
+  marker.addEventListener("mouseenter", () => {
+    fitMarkerPopup(marker);
+  });
+
+  marker.addEventListener("focusin", () => {
+    fitMarkerPopup(marker);
+  });
+
   marker.addEventListener("click", (event) => {
     event.preventDefault();
 
@@ -522,6 +574,15 @@ markers.forEach((marker) => {
     closeMarkers(marker);
     marker.classList.toggle("is-active", shouldOpen);
     marker.setAttribute("aria-expanded", String(shouldOpen));
+
+    if (shouldOpen) {
+      window.requestAnimationFrame(() => {
+        fitMarkerPopup(marker);
+      });
+      return;
+    }
+
+    resetMarkerPopupFit(marker);
   });
 });
 
@@ -537,17 +598,27 @@ document.addEventListener("keydown", (event) => {
 
 applyResponsiveCopy();
 syncLabelPreview();
+fitOpenMarkerPopups();
+
+window.addEventListener("resize", fitOpenMarkerPopups, { passive: true });
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", fitOpenMarkerPopups, { passive: true });
+  window.visualViewport.addEventListener("scroll", fitOpenMarkerPopups, { passive: true });
+}
 
 if (typeof mobileBreakpoint.addEventListener === "function") {
   mobileBreakpoint.addEventListener("change", () => {
     applyResponsiveCopy();
     syncLabelPreview();
     setShareStatus("");
+    fitOpenMarkerPopups();
   });
 } else if (typeof mobileBreakpoint.addListener === "function") {
   mobileBreakpoint.addListener(() => {
     applyResponsiveCopy();
     syncLabelPreview();
     setShareStatus("");
+    fitOpenMarkerPopups();
   });
 }
