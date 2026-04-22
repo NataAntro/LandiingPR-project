@@ -20,6 +20,10 @@ const mobileBoxLabelBreakOverrides = {
     secondary: "(БЫЛО 10К, СТАЛО 300,\nНО МЫ ВЕРИМ)",
   },
 };
+const CTA_EXPORT_SOURCES = {
+  mobile: "./assets/cta-box-mobile.png",
+  desktop: "./assets/cta-box-desktop.png",
+};
 const boxLabelOptions = [
   "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)",
   "ПОДПИСЧИКИ (ЧАСТЬ ПРИБУДЕТ ПОЗЖЕ)",
@@ -30,6 +34,7 @@ const boxLabelOptions = [
 ];
 
 let isShareActionPending = false;
+let ctaExportImagePromise = null;
 
 const getRandomBoxLabel = (currentValue) => {
   const currentLabel = currentValue.trim();
@@ -175,6 +180,65 @@ const waitForImageReady = async (image) => {
   });
 };
 
+const getCtaExportSource = () =>
+  mobileBreakpoint.matches ? CTA_EXPORT_SOURCES.mobile : CTA_EXPORT_SOURCES.desktop;
+
+const loadCtaExportImage = async () => {
+  const source = getCtaExportSource();
+
+  if (ctaExportImagePromise?.source === source) {
+    return ctaExportImagePromise.promise;
+  }
+
+  const promise = new Promise((resolve, reject) => {
+    const image = new Image();
+
+    image.decoding = "async";
+    image.src = source;
+
+    const finalize = () => {
+      cleanup();
+      resolve(image);
+    };
+    const fail = () => {
+      cleanup();
+      reject(new Error(`CTA export image failed to load: ${source}`));
+    };
+    const cleanup = () => {
+      image.removeEventListener("load", finalize);
+      image.removeEventListener("error", fail);
+    };
+
+    if (typeof image.decode === "function") {
+      image
+        .decode()
+        .then(finalize)
+        .catch(() => {
+          if (image.complete && image.naturalWidth > 0) {
+            finalize();
+            return;
+          }
+
+          image.addEventListener("load", finalize, { once: true });
+          image.addEventListener("error", fail, { once: true });
+        });
+      return;
+    }
+
+    image.addEventListener("load", finalize, { once: true });
+    image.addEventListener("error", fail, { once: true });
+  });
+
+  ctaExportImagePromise = { source, promise };
+
+  try {
+    return await promise;
+  } catch (error) {
+    ctaExportImagePromise = null;
+    throw error;
+  }
+};
+
 const buildCanvasFont = (styles, fontSize) => {
   const fontStyle = styles.fontStyle || "normal";
   const fontWeight = styles.fontWeight || "400";
@@ -254,7 +318,7 @@ const getExportFileName = () => {
     String(date.getSeconds()).padStart(2, "0"),
   ].join("");
 
-  return `podpisannaya-korobka-${datePart}-${timePart}.png`;
+  return `podpisannaya-korobka-${datePart}-${timePart}.jpg`;
 };
 
 const exportBoxImageBlob = async () => {
@@ -263,6 +327,7 @@ const exportBoxImageBlob = async () => {
   }
 
   await waitForImageReady(ctaVisualImage);
+  const exportImage = await loadCtaExportImage();
 
   if (document.fonts?.ready) {
     await document.fonts.ready;
@@ -272,8 +337,8 @@ const exportBoxImageBlob = async () => {
   const labelRect = ctaLabelNote.getBoundingClientRect();
   const labelStyles = window.getComputedStyle(ctaLabelNote);
   const secondaryStyles = window.getComputedStyle(previewSecondary);
-  const exportWidth = ctaVisualImage.naturalWidth || 1372;
-  const exportHeight = ctaVisualImage.naturalHeight || 1372;
+  const exportWidth = exportImage.naturalWidth || 1372;
+  const exportHeight = exportImage.naturalHeight || 1372;
   const scaleX = exportWidth / visualRect.width;
   const scaleY = exportHeight / visualRect.height;
   const canvas = document.createElement("canvas");
@@ -286,7 +351,9 @@ const exportBoxImageBlob = async () => {
   canvas.width = exportWidth;
   canvas.height = exportHeight;
 
-  ctx.drawImage(ctaVisualImage, 0, 0, exportWidth, exportHeight);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, exportWidth, exportHeight);
+  ctx.drawImage(exportImage, 0, 0, exportWidth, exportHeight);
 
   const labelArea = {
     x: (labelRect.left - visualRect.left) * scaleX,
@@ -340,12 +407,12 @@ const exportBoxImageBlob = async () => {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (!blob) {
-        reject(new Error("PNG export failed."));
+        reject(new Error("JPEG export failed."));
         return;
       }
 
       resolve(blob);
-    }, "image/png");
+    }, "image/jpeg", 0.92);
   });
 };
 
@@ -393,7 +460,7 @@ const handleShareButtonClick = async () => {
     const fileName = getExportFileName();
     const file =
       typeof File === "function"
-        ? new File([blob], fileName, { type: "image/png", lastModified: Date.now() })
+        ? new File([blob], fileName, { type: "image/jpeg", lastModified: Date.now() })
         : blob;
 
     try {
@@ -413,14 +480,10 @@ const handleShareButtonClick = async () => {
     }
 
     downloadBlob(blob, fileName);
-    setShareStatus(
-      mobileBreakpoint.matches
-        ? "Картинка готова и уже сохранена на устройство."
-        : "Картинка с подписью сохранена на устройство.",
-    );
+    setShareStatus("");
   } catch (error) {
     console.error(error);
-    setShareStatus("Не получилось подготовить картинку. Попробуйте еще раз.");
+    setShareStatus("Не получилось подготовить коробку. Попробуйте еще раз.");
   } finally {
     setShareButtonPending(false);
   }
