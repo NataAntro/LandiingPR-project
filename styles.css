@@ -101,6 +101,7 @@ input {
 /* ─── Button ─────────────────────────────────────────────── */
 .button {
   display: inline-flex;
+  position: relative;
   align-items: center;
   justify-content: center;
   width: 100%;
@@ -135,6 +136,11 @@ input {
   color: var(--white);
 }
 
+.hero__badge-mobile-art,
+.hero__button-mobile-art {
+  display: none;
+}
+
 /* ─── Hero ───────────────────────────────────────────────── */
 .hero {
   position: relative;
@@ -156,50 +162,7 @@ input {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.95;
-}
-
-.hero__menu-row {
-  position: relative;
-  width: 100%;
-}
-
-.hero__menu-row--primary {
-  height: 120px;
-  margin-top: 40px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.06) 100%),
-    rgba(16, 30, 88, 0.22);
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.hero__menu-row--secondary {
-  height: 80px;
-  background: rgba(17, 28, 76, 0.36);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.hero__glow {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(36px);
-  opacity: 0.34;
-}
-
-.hero__glow--left {
-  top: 110px;
-  left: 250px;
-  width: 220px;
-  height: 220px;
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.hero__glow--right {
-  top: 280px;
-  right: 240px;
-  width: 180px;
-  height: 180px;
-  background: rgba(100, 118, 182, 0.42);
+  opacity: 1;
 }
 
 .hero__header {
@@ -209,25 +172,49 @@ input {
   right: 0;
   z-index: 3;
   width: min(100%, 1440px);
+  height: 60px;
   margin: 0 auto;
-  padding-left: 22px;
+}
+
+.hero__header::before,
+.hero__header::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  background: var(--brand-mid);
+}
+
+.hero__header::before {
+  left: 0;
+  width: 140px;
+  height: 60px;
+}
+
+.hero__header::after {
+  left: 680px;
+  width: 90px;
+  height: 60px;
 }
 
 .hero__menu-button {
+  position: absolute;
+  top: 0;
+  left: calc(50% - 22px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 60px;
   height: 60px;
-  padding: 14px;
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
+  z-index: 1;
 }
 
 .hero__menu-button img {
-  width: 32px;
-  height: 32px;
+  width: 60px;
+  height: 60px;
 }
 
 .hero__content {
@@ -273,14 +260,14 @@ input {
 }
 
 .hero__badge--top {
-  top: -15px;
-  right: 126px;
+  top: -16.5469px;
+  left: 290.4355px;
   transform: rotate(5deg);
 }
 
 .hero__badge--bottom {
-  left: 34px;
-  bottom: -32px;
+  top: 169.9141px;
+  left: 62.7773px;
   transform: rotate(12deg);
 }
 
@@ -329,7 +316,7 @@ input {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: var(--radius-xl); /* скругление перенесено с фрейма на img */
+  border-radius: 0;
   display: block;
 }
 
@@ -357,24 +344,6 @@ input {
   width: 100%;
   height: 100%;
   display: block;
-  /* Pulse animation — намекает на интерактивность */
-  animation: marker-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes marker-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-}
-
-.marker:hover > img {
-  animation: none;
-  transform: scale(1.1);
-}
-
-.marker.is-active > img,
-.marker:focus-visible > img {
-  animation: none;
-  transform: scale(1.1);
 }
 
 .marker:focus-visible {
@@ -571,14 +540,14 @@ input {
   justify-content: center;
   gap: 4px;
   color: var(--brand-mid);
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.3;
   align-self: center;
 }
 
 .intro__check img {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 
@@ -624,6 +593,12 @@ input {
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
+}
+
+.feature-card:first-child .feature-card__heading,
+.feature-card:last-child .feature-card__heading {
+  width: 306px;
+  align-self: center;
 }
 
 .feature-card__body p {
@@ -728,6 +703,10 @@ input {
   gap: 12px;
 }
 
+.cta__copy .section-title {
+  width: 100%;
+}
+
 .cta__copy p {
   margin: 0;
   color: var(--ink);
@@ -745,7 +724,6 @@ input {
   border: 1px solid var(--line);
   border-radius: 40px;
   background: var(--white);
-  box-shadow: 0 10px 40px rgba(36, 56, 136, 0.08);
 }
 
 .cta__input-wrap {
@@ -757,10 +735,10 @@ input {
   width: 100%;
   border: 0;
   outline: 0;
-  color: var(--ink);
+  color: var(--muted);
   background: transparent;
   font-size: 14px;
-  line-height: 1;
+  line-height: 14px;
 }
 
 .cta__input-wrap input::placeholder {
@@ -778,18 +756,18 @@ input {
   min-height: 48px;
   border: 0;
   border-radius: 50%;
-  background: var(--brand-fog);
+  background: transparent;
   cursor: pointer;
   padding: 0;
 }
 
 .cta__search-button img {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
   max-width: none;
-  flex: 0 0 24px;
+  flex: 0 0 48px;
   object-fit: contain;
   display: block;
 }
@@ -835,7 +813,7 @@ input {
   color: var(--brand);
   font-family: "Caveat", cursive;
   font-weight: 700;
-  font-size: 30px;
+  font-size: 22px;
   line-height: 1.2;
   text-align: center;
   pointer-events: none;
@@ -844,7 +822,7 @@ input {
 .cta__label-note small {
   font-family: "Caveat", cursive;
   font-weight: 700;
-  font-size: 30px;
+  font-size: 22px;
   line-height: 1.2;
 }
 
@@ -891,7 +869,7 @@ input {
   font-size: 14px;
   line-height: 1.5;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .final__bottom p {
@@ -905,8 +883,8 @@ input {
 /* Figma: max-width 468.75px */
 .final__image-wrap {
   width: 375px;
-  max-width: 468.75px;
-  border-radius: var(--radius-xl);
+  max-width: none;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -991,6 +969,10 @@ input {
 @media (max-width: 767px) {
   :root {
     --content-width: 343px;
+    --hero-mobile-content-width: min(343px, calc(100vw - 32px));
+    --hero-mobile-title-height: calc(var(--hero-mobile-content-width) * 132 / 343);
+    --hero-mobile-button-height: calc(var(--hero-mobile-content-width) * 53 / 343);
+    --hero-mobile-gap: calc(var(--hero-mobile-content-width) * 48 / 343);
   }
 
   /* Responsive copy: показываем мобильные версии текста */
@@ -1021,40 +1003,64 @@ input {
     height: 240px;
   }
 
-  .hero__menu-row--primary,
-  .hero__menu-row--secondary {
-    width: 375px;
+  .hero__menu-image {
+    display: block;
   }
 
   .hero__header {
-    width: 375px;
-    padding-left: 22px;
+    width: 100%;
   }
 
-  .hero__menu-button {
-    width: 40px;
-    height: 40px;
-    padding: 10px 0;
-  }
-
-  .hero__menu-button img {
-    width: 16px;
-    height: 14px;
+  .hero__header::before,
+  .hero__header::after {
+    display: none;
   }
 
   .hero__content {
-    width: 343px;
-    gap: 48px;
+    width: var(--hero-mobile-content-width);
+    gap: var(--hero-mobile-gap);
     padding-top: 92px;
   }
 
   .hero__headline-wrap {
-    width: 343px;
+    width: var(--hero-mobile-content-width);
+    height: var(--hero-mobile-title-height);
+    padding-top: 0;
+    overflow: visible;
   }
 
   .hero__title {
-    font-size: 40px;
-    line-height: 1.1;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    font-size: calc(var(--hero-mobile-content-width) * 40 / 343);
+    line-height: calc(var(--hero-mobile-content-width) * 44 / 343);
+  }
+
+  .hero__badge-mobile-art {
+    position: absolute;
+    display: block;
+    max-width: none;
+  }
+
+  .hero__badge-mobile-art--top {
+    top: calc(var(--hero-mobile-content-width) * -18 / 343);
+    left: calc(var(--hero-mobile-content-width) * 227.918 / 343);
+    width: calc(var(--hero-mobile-content-width) * 81 / 343);
+    height: calc(var(--hero-mobile-content-width) * 29 / 343);
+  }
+
+  .hero__badge-mobile-art--bottom {
+    top: calc(var(--hero-mobile-content-width) * 113.4766 / 343);
+    left: calc(var(--hero-mobile-content-width) * 44.4961 / 343);
+    width: calc(var(--hero-mobile-content-width) * 122 / 343);
+    height: calc(var(--hero-mobile-content-width) * 47 / 343);
+  }
+
+  .hero__badge {
+    opacity: 0;
+    pointer-events: none;
   }
 
   /* Figma mobile: badge padding 4px, radius 4px, font-size 14px */
@@ -1065,27 +1071,50 @@ input {
   }
 
   .hero__badge--top {
-    top: -7px;
-    right: 39px;
+    top: -18px;
+    left: 227.918px;
   }
 
   .hero__badge--bottom {
-    left: 16px;
-    bottom: -20px;
+    top: 113.4766px;
+    left: 44.4961px;
   }
 
   /* Figma mobile: 375px frame => x -56px, y 272px; keep that offset relative to viewport center */
   .hero__image-wrap {
-    width: 480px;
-    height: 480px;
-    bottom: -32px;
-    left: calc(50% - 243.5px);
+    top: calc(92px + var(--hero-mobile-content-width) * 180 / 343);
+    left: calc(50% - var(--hero-mobile-content-width) * 243.5 / 343);
+    width: calc(var(--hero-mobile-content-width) * 480 / 343);
+    height: calc(var(--hero-mobile-content-width) * 480 / 343);
+    bottom: auto;
     transform: none;
   }
 
-  /* Figma mobile: hero CTA кнопка 327px (не full width) */
   .hero .button--hero {
-    width: 327px;
+    width: var(--hero-mobile-content-width);
+    min-height: var(--hero-mobile-button-height);
+    height: var(--hero-mobile-button-height);
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .hero .button--hero:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .hero .button--hero .button__label {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hero__button-mobile-art {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: none;
   }
 
   /* Intro */
@@ -1179,13 +1208,8 @@ input {
     min-height: 0;
   }
 
-  .feature-card__body .feature-card__heading,
   .feature-card__body p {
     width: 343px;
-  }
-
-  .feature-card__body p {
-    font-family: "Iansui", "Inter", sans-serif;
   }
 
   .feature-card__media {
@@ -1241,15 +1265,20 @@ input {
     height: 343px;
   }
 
+  .cta__copy .section-title {
+    width: 306px;
+    align-self: center;
+  }
+
   /* Figma mobile: Caveat Bold 22px, centered on the box */
   .cta__label-note {
     width: 306px;
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1.2;
   }
 
   .cta__label-note small {
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1.2;
   }
 

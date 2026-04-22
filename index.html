@@ -50,39 +50,63 @@
           <img
             class="hero__menu-image"
             src="./assets/menu-band-desktop.svg"
+            srcset="./assets/menu-band-mobile.svg 375w, ./assets/menu-band-desktop.svg 1440w"
+            sizes="(max-width: 767px) 100vw, 1440px"
             alt=""
             width="1440"
             height="240"
           />
-          <div class="hero__menu-row hero__menu-row--primary"></div>
-          <div class="hero__menu-row hero__menu-row--secondary"></div>
         </div>
-
-        <div class="hero__glow hero__glow--left"></div>
-        <div class="hero__glow hero__glow--right"></div>
 
         <header class="hero__header">
           <button class="hero__menu-button" aria-label="Открыть меню">
-            <img src="./assets/icon-menu.svg" alt="" width="32" height="32" />
+            <img src="./assets/icon-menu.svg" alt="" width="60" height="60" />
           </button>
         </header>
 
         <div class="hero__content container container--narrow">
           <div class="hero__headline-wrap">
+            <img
+              class="hero__badge-mobile-art hero__badge-mobile-art--top"
+              src="./assets/hero-mobile-badge-top.svg"
+              alt=""
+              aria-hidden="true"
+              width="81"
+              height="29"
+            />
+            <img
+              class="hero__badge-mobile-art hero__badge-mobile-art--bottom"
+              src="./assets/hero-mobile-badge-bottom.svg"
+              alt=""
+              aria-hidden="true"
+              width="122"
+              height="47"
+            />
             <span class="hero__badge hero__badge--top">Недорого!</span>
             <h1 class="hero__title">
-              Переезжаем<br />
-              из&nbsp;Телеграма<br />
+              Трезвые<br />
+              переносчики<br />
               в&nbsp;Макс
             </h1>
             <span class="hero__badge hero__badge--bottom">Не&nbsp;продолбаем!</span>
           </div>
 
-          <a class="button button--hero" id="hero-cta-button" href="#features">Начать переезд</a>
+          <a class="button button--hero" id="hero-cta-button" href="#features">
+            <span class="button__label">Начать переезд</span>
+            <img
+              class="hero__button-mobile-art"
+              src="./assets/hero-mobile-button.svg"
+              alt=""
+              aria-hidden="true"
+              width="343"
+              height="53"
+            />
+          </a>
         </div>
 
         <div class="hero__image-wrap">
           <picture>
+            <source media="(max-width: 767px)" srcset="./assets/hero-mobile.png" />
             <source srcset="./assets/hero-desktop.webp" type="image/webp" />
             <img
               class="hero__image"
@@ -105,6 +129,7 @@
 
           <div class="intro__image-frame">
             <picture>
+              <source media="(max-width: 767px)" srcset="./assets/intro-mobile.png" />
               <source srcset="./assets/intro-desktop.webp" type="image/webp" />
               <img
                 class="intro__image"
@@ -122,7 +147,7 @@
               data-marker
               aria-expanded="false"
               aria-label="Показать подсказку: Телеграмма Максу"
-              style="--popup-width: 201px;"
+              style="--popup-width: 225px;"
             >
               <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
               <span class="marker__popup">
@@ -136,7 +161,7 @@
               data-marker
               aria-expanded="false"
               aria-label="Показать подсказку: LiveDune"
-              style="--popup-width: 201px;"
+              style="--popup-width: 225px;"
             >
               <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
               <span class="marker__popup">
@@ -150,7 +175,7 @@
               data-marker
               aria-expanded="false"
               aria-label="Показать подсказку: TargetHunter"
-              style="--popup-width: 201px;"
+              style="--popup-width: 225px;"
             >
               <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
               <span class="marker__popup marker__popup--left">
@@ -166,7 +191,7 @@
               <span class="text--mobile">У нас тут <strong>три полезных инструмента</strong>, чтобы вашу маму и тут и там показывали. Ступайте в квартиру, и соберите все самое необходимое.</span>
             </p>
             <label class="intro__check">
-              <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
+              <img src="./assets/399caefc-7a8c-4c3e-aced-c91e8abd21fe.svg" alt="" width="27" height="27" />
               <span
                 data-desktop="Сначала самое ценное"
                 data-mobile="Нажмите, чтобы узнать больше"
@@ -184,7 +209,7 @@
           <!-- Card 1 -->
           <article class="feature-card" id="feature-card-1">
             <div class="feature-card__body">
-              <h2 class="feature-card__heading">Коридор. Тут всё начинается</h2>
+              <h2 class="feature-card__heading">Упаковать и перенести самое ценное</h2>
               <p>
                 <span class="text--desktop">Документы, техника, аптечка и вещи первой необходимости едут в первую очередь.</span>
                 <span class="text--mobile">Наташа из <strong>Телеграммы</strong> переносит ваш контент из ТГ в Макс — аккуратно, как бабушкин сервиз.</span>
@@ -211,7 +236,7 @@
                 data-marker
                 aria-expanded="false"
                 aria-label="Показать подсказку: Здравствуйте, так что тут у вас?"
-                style="--marker-top: 34.7%; --marker-left: 45.8%; --popup-width: 281px;"
+                style="--marker-top: 34.7%; --marker-left: 45.8%; --popup-width: 305px;"
               >
                 <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
                 <span class="marker__popup marker__popup--above">
@@ -225,10 +250,11 @@
                 data-marker
                 aria-expanded="false"
                 aria-label="Показать подсказку: Нет, оставлять тут ничего не надо"
-                style="--marker-top: 63.4%; --marker-left: 26.8%; --popup-width: 242px;"
+                style="--marker-top: 63.4%; --marker-left: 26.8%; --popup-width: 266px;"
               >
                 <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
                 <span class="marker__popup marker__popup--above-right">
+                  <span class="marker__popup-title">Вы копили эти посты годами</span>
                   <span class="marker__popup-text">Нет, оставлять тут ничего не надо. Нет, не плевать, начнем все заново. Вы чего? У вас смотрите какие ценности тут накопились. Это все можно использовать и на новом месте.</span>
                 </span>
               </button>
@@ -238,10 +264,11 @@
                 data-marker
                 aria-expanded="false"
                 aria-label="Показать подсказку: Глядите, что это тут у нас"
-                style="--marker-top: 57.7%; --marker-left: 83.7%; --popup-width: 248px;"
+                style="--marker-top: 57.7%; --marker-left: 83.7%; --popup-width: 272px;"
               >
                 <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
                 <span class="marker__popup marker__popup--left">
+                  <span class="marker__popup-title">Глядите, что это тут у нас?</span>
                   <span class="marker__popup-text">Глядите, что это тут у нас? Это же ваш трогательный рассказ 2023 про то, как балетная школа развивает силу воли. Помните, сколько он собрал репостов? А как после него к вам пришел большой заказ на тренинг для команды? Это надо забирать и снова размещать.</span>
                 </span>
               </button>
@@ -251,12 +278,12 @@
                 data-marker
                 aria-expanded="false"
                 aria-label="Показать подсказку: В руках у Наташи — Телеграмма Максу"
-                style="--marker-top: 72.5%; --marker-left: 58.6%; --popup-width: 253px;"
+                style="--marker-top: 72.5%; --marker-left: 58.6%; --popup-width: 277px;"
               >
                 <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
                 <span class="marker__popup marker__popup--above">
                   <span class="marker__popup-title">В руках у Наташи — «Телеграмма Максу»</span>
-                  <span class="marker__popup-text">Тот самый инструмент, который помогает по-умному перенести ваши посты из Телеграма в Макс. Можно выбрать только топ самых популярных и запланировать их на несколько недель вперед. При этом сервис не постит их сразу скопом, а позволяет отфильтровать по самым популярным и запостить их.</span>
+                  <span class="marker__popup-text">Тот самый инструмент, который помогает по‑умному перенести ваши посты из Телеграма в Макс. Можно выбрать только топ самых популярных и запланировать их на несколько недель вперед. При этом сервис не постит их сразу скопом (потому что ну мы что, дикие что ли) а позволяет отфильтровать по самым популярным и запостить их.</span>
                 </span>
               </button>
             </div>
@@ -301,7 +328,7 @@
                 data-marker
                 aria-expanded="false"
                 aria-label="Показать подсказку: Переезд без аналитики — как переезд без списка коробок"
-                style="--marker-top: 193.594px; --marker-left: 274px; --popup-width: 261px;"
+                style="--marker-top: 193.594px; --marker-left: 274px; --popup-width: 285px;"
               >
                 <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
                 <span class="marker__popup marker__popup--above-left">
@@ -315,7 +342,7 @@
                 data-marker
                 aria-expanded="false"
                 aria-label="Показать подсказку: Кросспостинг ТГ → Макс"
-                style="--marker-top: 314.188px; --marker-left: 249px; --popup-width: 202px;"
+                style="--marker-top: 314.188px; --marker-left: 249px; --popup-width: 226px;"
               >
                 <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
                 <span class="marker__popup marker__popup--left">
@@ -381,7 +408,7 @@
                 data-marker
                 aria-expanded="false"
                 aria-label="Показать подсказку: Переезд без аудитории — это как новоселье без гостей"
-                style="--marker-top: 187px; --marker-left: 238px; --popup-width: 194px;"
+                style="--marker-top: 187px; --marker-left: 238px; --popup-width: 218px;"
               >
                 <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
                 <span class="marker__popup marker__popup--above-left">
@@ -395,7 +422,7 @@
                 data-marker
                 aria-expanded="false"
                 aria-label="Показать подсказку: Комментарии, реакции, обратная связь — всё, что превращает пустую квартиру в дом"
-                style="--marker-top: 260px; --marker-left: 303px; --popup-width: 149px;"
+                style="--marker-top: 260px; --marker-left: 303px; --popup-width: 173px;"
               >
                 <img src="./assets/icon-marker.svg" alt="" width="27" height="27" />
                 <span class="marker__popup marker__popup--left">
@@ -438,21 +465,22 @@
                 id="box-label-input"
                 type="text"
                 maxlength="96"
-                placeholder="Введите надпись"
-                value=""
-                data-desktop-value=""
-                data-desktop-placeholder="Введите надпись"
+                placeholder=""
+                value="КОНТЕНТ 2020–2024"
+                data-desktop-value="КОНТЕНТ 2020–2024"
+                data-desktop-placeholder=""
                 data-mobile-value=""
                 data-mobile-placeholder="Введите надпись"
               />
             </label>
             <button class="cta__search-button" type="submit" aria-label="Подтвердить подпись">
-              <img src="./assets/icon-arrow.svg" alt="" width="24" height="24" />
+              <img src="./assets/icon-arrow.svg" alt="" width="48" height="48" />
             </button>
           </form>
 
           <div class="cta__visual">
             <picture>
+              <source media="(max-width: 767px)" srcset="./assets/cta-box-mobile.png" />
               <source srcset="./assets/cta-box-desktop.webp" type="image/webp" />
               <img
                 class="cta__visual-image"
@@ -500,6 +528,7 @@
 
           <div class="final__image-wrap">
             <picture>
+              <source media="(max-width: 767px)" srcset="./assets/final-mobile.png" />
               <source srcset="./assets/final-desktop.webp" type="image/webp" />
               <img
                 class="final__image"

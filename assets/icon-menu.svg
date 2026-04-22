@@ -1,1 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" overflow="visible" preserveAspectRatio="none" style="display:block" viewBox="0 0 32 32"><path stroke="var(--stroke-0, #6476b6)" stroke-linecap="round" stroke-width="2" d="M5 9h21M5 16h21M5 23h21"/></svg>
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M19 23H40" stroke="#6476B6" stroke-width="2" stroke-linecap="round" />
+  <path d="M19 30H40" stroke="#6476B6" stroke-width="2" stroke-linecap="round" />
+  <path d="M19 37H40" stroke="#6476B6" stroke-width="2" stroke-linecap="round" />
+</svg>
