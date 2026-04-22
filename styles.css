@@ -337,6 +337,15 @@ input {
   appearance: none;
   cursor: pointer;
   z-index: 3;
+  overflow: visible;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+  --marker-ink: var(--brand);
+  --marker-surface: var(--white);
+  --marker-glow: rgba(233, 241, 254, 0.55);
+  --marker-shadow: rgba(36, 56, 136, 0.2);
+  --marker-border-width: 2px;
+  --marker-delay: 0s;
 }
 
 .marker:hover,
@@ -345,18 +354,118 @@ input {
   z-index: 40;
 }
 
+.marker::before,
+.marker::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.marker::before {
+  inset: 0;
+  border: var(--marker-border-width) solid var(--marker-ink);
+  border-radius: 999px;
+  background: var(--marker-surface);
+  box-shadow:
+    0 3px 10px rgba(36, 56, 136, 0.16),
+    0 0 0 0 var(--marker-glow);
+  animation: marker-shell-pulse 2.9s cubic-bezier(0.42, 0, 0.22, 1) infinite;
+  animation-delay: var(--marker-delay);
+  will-change: transform, box-shadow;
+}
+
+.marker::after {
+  top: 50%;
+  left: 50%;
+  width: 37.5%;
+  height: 37.5%;
+  border-radius: 999px;
+  background: var(--marker-ink);
+  transform: translate(-50%, -50%);
+  animation: marker-core-pulse 2.9s cubic-bezier(0.42, 0, 0.22, 1) infinite;
+  animation-delay: var(--marker-delay);
+  will-change: transform;
+}
+
+.marker:nth-of-type(4n + 1) {
+  --marker-delay: 0s;
+}
+
+.marker:nth-of-type(4n + 2) {
+  --marker-delay: 0.35s;
+}
+
+.marker:nth-of-type(4n + 3) {
+  --marker-delay: 0.7s;
+}
+
+.marker:nth-of-type(4n) {
+  --marker-delay: 1.05s;
+}
+
 .marker > img {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .marker:focus-visible {
   outline: 2px solid rgba(36, 56, 136, 0.35);
   outline-offset: 4px;
   border-radius: 999px;
+}
+
+.marker:hover::before,
+.marker.is-active::before,
+.marker:focus-visible::before {
+  animation-play-state: paused;
+  transform: scale(1.08);
+  box-shadow:
+    0 6px 18px rgba(36, 56, 136, 0.22),
+    0 0 0 4px rgba(233, 241, 254, 0.46);
+}
+
+.marker:hover::after,
+.marker.is-active::after,
+.marker:focus-visible::after {
+  animation-play-state: paused;
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+@keyframes marker-shell-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 3px 10px rgba(36, 56, 136, 0.16),
+      0 0 0 0 rgba(233, 241, 254, 0);
+  }
+
+  50% {
+    transform: scale(1.06);
+    box-shadow:
+      0 6px 16px rgba(36, 56, 136, 0.2),
+      0 0 0 4px rgba(233, 241, 254, 0.42);
+  }
+}
+
+@keyframes marker-core-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.06);
+  }
 }
 
 /* ─── Marker popup ────────────────────────────────────────── */
@@ -1016,7 +1125,20 @@ input {
 
   /* Hero */
   .hero {
-    min-height: calc(92px + (var(--hero-mobile-content-width) * 660 / 343) + env(safe-area-inset-bottom, 0px));
+    /*
+      Mobile hero in Figma is 720px high at 375px width, while the hero image
+      still overflows below the frame. The previous formula scaled both the
+      CTA-to-image offset and the image height from the growing content width,
+      which pushed the lower band too far down on wider phones.
+      Keep the top offset tied to the capped 343px title frame, and scale only
+      the image block with the wider content width.
+    */
+    min-height: calc(
+      60px +
+      (var(--hero-mobile-title-width) * 180 / 343) +
+      (var(--hero-mobile-content-width) * 480 / 343) +
+      env(safe-area-inset-bottom, 0px)
+    );
   }
 
   .hero__menu-band {
@@ -1170,6 +1292,7 @@ input {
   .marker {
     width: 16px;
     height: 16px;
+    --marker-border-width: 1.5px;
   }
 
   .marker--one {
@@ -1250,6 +1373,12 @@ input {
   .feature-card__media-visual > picture > img,
   .feature-card__media-visual > picture img {
     height: 100%;
+  }
+
+  /* Show a bit more of the lower part of card 1 art on wider phones. */
+  #feature-card-1 .feature-card__media-visual > picture > img,
+  #feature-card-1 .feature-card__media-visual > picture img {
+    object-position: center bottom;
   }
 
   .feature-card--light .feature-card__media-visual > picture {
@@ -1399,5 +1528,14 @@ input {
     gap: 16px;
     margin: 0 auto;
     padding-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marker::before,
+  .marker::after,
+  .marker__popup {
+    animation: none;
+    transition: none;
   }
 }
