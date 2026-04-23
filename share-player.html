@@ -126,6 +126,16 @@
         margin-bottom: 12px;
       }
 
+      .share-player-panel {
+        display: none;
+      }
+
+      .share-player-panel-kicker,
+      .share-player-panel-title,
+      .share-player-panel-copy {
+        margin: 0;
+      }
+
       .share-player-status {
         margin: 0 0 8px;
         color: var(--ink-muted);
@@ -271,18 +281,25 @@
 
       @media (min-width: 768px) {
         .share-player-page {
-          gap: 18px;
-          padding: 28px 32px 36px;
+          justify-content: center;
+          gap: clamp(18px, 2vw, 26px);
+          padding: clamp(22px, 2.8vw, 40px);
         }
 
         .share-player-topbar,
         .share-player-card {
-          width: min(100%, 1040px);
+          width: min(100%, 1180px);
         }
 
         .share-player-card {
-          padding: 28px;
-          border-radius: 34px;
+          padding: clamp(24px, 3vw, 38px);
+          border-radius: 36px;
+          background:
+            radial-gradient(circle at top right, rgba(103, 120, 182, 0.24), transparent 34%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(244, 247, 255, 0.86));
+          box-shadow:
+            0 28px 96px rgba(36, 56, 136, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.72);
         }
 
         .share-player-back {
@@ -296,46 +313,87 @@
         }
 
         .share-player-copy {
-          margin-bottom: 22px;
+          margin-bottom: clamp(18px, 2.4vw, 28px);
         }
 
         .share-player-title {
-          margin-bottom: 12px;
-          font-size: clamp(48px, 5vw, 68px);
+          margin-bottom: 10px;
+          max-width: 11ch;
+          font-size: clamp(42px, 4.8vw, 64px);
           text-align: left;
         }
 
         .share-player-status {
           margin-bottom: 0;
-          font-size: 18px;
+          max-width: 44ch;
+          font-size: 16px;
+          line-height: 1.5;
           text-align: left;
         }
 
         .share-player-body {
-          display: grid;
-          grid-template-columns: minmax(320px, 430px) minmax(240px, 1fr);
-          align-items: stretch;
-          gap: 28px;
+          display: flex;
+          flex-direction: column;
+          gap: 22px;
         }
 
         .share-player-frame {
           width: 100%;
-          max-width: 430px;
+          max-width: min(100%, 430px);
           margin: 0 auto;
+          border-radius: 30px;
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(222, 228, 248, 0.92)),
+            rgba(255, 255, 255, 0.68);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.78),
+            0 14px 36px rgba(36, 56, 136, 0.08);
         }
 
         .share-player-sidebar {
-          justify-content: flex-end;
-          min-height: 100%;
+          min-height: 0;
           padding: 24px;
-          border-radius: 28px;
-          background: rgba(255, 255, 255, 0.44);
-          border: 1px solid rgba(36, 56, 136, 0.08);
+          border-radius: 30px;
+          background:
+            linear-gradient(180deg, rgba(245, 247, 255, 0.9), rgba(229, 235, 252, 0.88));
+          border: 1px solid rgba(36, 56, 136, 0.09);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+          justify-content: space-between;
+          gap: 24px;
+        }
+
+        .share-player-panel {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .share-player-panel-kicker {
+          color: rgba(36, 56, 136, 0.6);
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .share-player-panel-title {
+          max-width: 12ch;
+          font-family: "Unbounded", sans-serif;
+          font-size: clamp(28px, 2.6vw, 40px);
+          line-height: 1;
+          letter-spacing: -0.04em;
+        }
+
+        .share-player-panel-copy {
+          max-width: 34ch;
+          color: rgba(36, 56, 136, 0.7);
+          font-size: 17px;
+          line-height: 1.55;
         }
 
         .share-player-frame,
         .share-player-video {
-          max-height: min(74vh, 780px);
+          max-height: min(68vh, 740px);
         }
 
         .share-player-loader {
@@ -364,16 +422,47 @@
         }
 
         .share-player-actions {
-          flex-direction: column;
+          flex-direction: row;
+          flex-wrap: wrap;
           gap: 16px;
           margin-top: auto;
         }
 
         .share-player-button,
         .share-player-link {
-          width: 100%;
-          min-height: 60px;
+          min-width: 180px;
+          min-height: 58px;
           font-size: 18px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .share-player-body {
+          display: grid;
+          grid-template-columns:
+            minmax(320px, min(38vw, 430px))
+            minmax(320px, 1fr);
+          align-items: stretch;
+          gap: clamp(24px, 2.8vw, 40px);
+        }
+
+        .share-player-frame {
+          width: min(100%, calc((100vh - 250px) * 9 / 16));
+          max-width: 430px;
+          margin: 0;
+        }
+
+        .share-player-sidebar {
+          min-height: min(68vh, 740px);
+        }
+
+        .share-player-actions {
+          flex-direction: column;
+        }
+
+        .share-player-button,
+        .share-player-link {
+          width: 100%;
         }
       }
 
@@ -418,6 +507,13 @@
           </div>
 
           <aside class="share-player-sidebar">
+            <div class="share-player-panel">
+              <p class="share-player-panel-kicker" id="share-player-panel-kicker">Видео-коробка</p>
+              <h2 class="share-player-panel-title" id="share-player-panel-title">Собираем видео</h2>
+              <p class="share-player-panel-copy" id="share-player-panel-copy">
+                Подождите немного: как только рендер завершится, видео появится здесь автоматически.
+              </p>
+            </div>
             <div class="share-player-actions">
               <button class="share-player-button" id="share-player-share" type="button" disabled>
                 Поделиться

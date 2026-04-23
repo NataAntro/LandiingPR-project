@@ -6,6 +6,9 @@ const videoNode = document.querySelector("#share-player-video");
 const loaderNode = document.querySelector("#share-player-loader");
 const loaderTitleNode = document.querySelector("#share-player-loader-title");
 const loaderCopyNode = document.querySelector("#share-player-loader-copy");
+const panelKickerNode = document.querySelector("#share-player-panel-kicker");
+const panelTitleNode = document.querySelector("#share-player-panel-title");
+const panelCopyNode = document.querySelector("#share-player-panel-copy");
 const shareButton = document.querySelector("#share-player-share");
 const downloadLink = document.querySelector("#share-player-download");
 const backButton = document.querySelector("#share-player-back");
@@ -66,7 +69,70 @@ const setLoaderVisible = (isVisible) => {
   loaderNode.hidden = !isVisible;
 };
 
+const setPanelCopy = ({ kicker = "", title = "", copy = "" } = {}) => {
+  if (panelKickerNode) {
+    panelKickerNode.textContent = kicker;
+  }
+
+  if (panelTitleNode) {
+    panelTitleNode.textContent = title;
+  }
+
+  if (panelCopyNode) {
+    panelCopyNode.textContent = copy;
+  }
+};
+
 const hasLiveOpener = () => Boolean(window.opener && !window.opener.closed);
+
+const applyPendingPresentation = (copy) => {
+  setLoaderCopy("Собираем!", "15 секунд");
+  setPanelCopy({
+    kicker: "Видео-коробка",
+    title: "Собираем видео",
+    copy,
+  });
+};
+
+const applyPlaybackLoadingPresentation = () => {
+  setLoaderCopy("Собираем!", "Готовим предпросмотр");
+  setPanelCopy({
+    kicker: "Почти готово",
+    title: "Загружаем видео",
+    copy: "Рендер завершился. Сейчас подтянем ролик в плеер, и можно будет поделиться им или скачать файл.",
+  });
+};
+
+const applyReadyPresentation = () => {
+  setPanelCopy({
+    kicker: "Готово",
+    title: "Коробка собрана",
+    copy: "Видео уже в плеере. Можно делиться ссылкой или скачать файл на компьютер.",
+  });
+};
+
+const applyUnavailablePresentation = () => {
+  if (isMobileViewport.matches) {
+    setLoaderCopy("Видео не найдено", "Попробуйте ещё раз");
+    return;
+  }
+
+  setLoaderCopy("Не получилось открыть", "Вернитесь назад и попробуйте ещё раз");
+  setPanelCopy({
+    kicker: "Нужен новый запуск",
+    title: "Видео ещё не открыто",
+    copy: "Похоже, эта ссылка уже не может подтянуть готовый ролик. Вернитесь назад и запустите сборку коробки ещё раз.",
+  });
+};
+
+const applyRenderErrorPresentation = () => {
+  setLoaderCopy("Не получилось собрать", "Попробуйте ещё раз");
+  setPanelCopy({
+    kicker: "Рендер остановился",
+    title: "Видео не собралось",
+    copy: "Сервис не смог закончить подготовку ролика. Вернитесь назад и попробуйте снова.",
+  });
+};
 
 const setDownloadState = () => {
   if (!downloadLink) {
@@ -160,13 +226,12 @@ const requestServerRenderFromPendingPage = async () => {
   const pendingRequest = readPendingRenderRequest();
 
   if (!pendingRequest) {
-    if (hasLiveOpener()) {
-      setLoaderCopy("Собираем!", "15 секунд");
-      setStatus("");
-      return;
-    }
-
-    setLoaderCopy("Видео не найдено", "Попробуйте ещё раз");
+    applyPendingPresentation(
+      hasLiveOpener()
+        ? "Подождите немного: как только рендер завершится, видео появится здесь автоматически."
+        : "Видео всё ещё готовится на сервисе. Если эта вкладка не обновится в течение минуты, вернитесь назад и запустите сборку ещё раз."
+    );
+    setStatus("");
     return;
   }
 
@@ -211,7 +276,7 @@ const requestServerRenderFromPendingPage = async () => {
     }
 
     console.error(error);
-    setLoaderCopy("Не получилось собрать", "Попробуйте ещё раз");
+    applyRenderErrorPresentation();
     setStatus("Рендер не завершился");
   } finally {
     pendingRenderAbortController = null;
@@ -358,10 +423,13 @@ setTitle("Ваша коробка");
 setDownloadState();
 
 if (!streamUrl) {
-  setLoaderCopy(
-    isPending ? "Собираем!" : "Видео не найдено",
-    isPending ? "15 секунд" : "Попробуйте ещё раз"
-  );
+  if (isPending) {
+    applyPendingPresentation(
+      "Подождите немного: как только рендер завершится, видео появится здесь автоматически."
+    );
+  } else {
+    applyUnavailablePresentation();
+  }
   setLoaderVisible(true);
   setStatus("");
   shareButton.disabled = true;
@@ -370,7 +438,7 @@ if (!streamUrl) {
     requestServerRenderFromPendingPage();
   }
 } else {
-  setLoaderCopy("Собираем!", "Готовим предпросмотр");
+  applyPlaybackLoadingPresentation();
   setLoaderVisible(true);
   setStatus("");
   videoNode.src = streamUrl;
@@ -378,6 +446,7 @@ if (!streamUrl) {
   const revealVideo = () => {
     setLoaderVisible(false);
     setStatus("");
+    applyReadyPresentation();
     videoNode.play().catch(() => {});
   };
   videoNode.addEventListener("loadeddata", revealVideo, { once: true });
