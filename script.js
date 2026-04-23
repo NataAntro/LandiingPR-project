@@ -14,6 +14,14 @@ const markers = Array.from(document.querySelectorAll("[data-marker]"));
 const adaptiveCopyNodes = document.querySelectorAll("[data-mobile]");
 const mobileBreakpoint = window.matchMedia("(max-width: 767px)");
 const popupViewportGap = 12;
+const FAST_SCROLL_EVENT_NAME = "landing:fast-scroll";
+const FAST_SCROLL_WARNING_IMAGE_SOURCE = "./assets/warning.webp";
+const FAST_SCROLL_WARNING_VISIBLE_MS = 950;
+const FAST_SCROLL_COOLDOWN_MS = 1200;
+const FAST_SCROLL_IGNORE_PROGRAMMATIC_MS = 1400;
+const FAST_SCROLL_MIN_DISTANCE_PX = 80;
+const FAST_SCROLL_DESKTOP_THRESHOLD_PX_PER_SEC = 2600;
+const FAST_SCROLL_MOBILE_THRESHOLD_PX_PER_SEC = 2200;
 const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
 const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
 const boxLabelBreakOverrides = {
@@ -61,6 +69,12 @@ const CTA_EXPORT_VIDEO_BOX_LAYOUT = {
 
 let isShareActionPending = false;
 let ctaExportImagePromise = null;
+let fastScrollCooldownUntil = 0;
+let ignoreFastScrollUntil = 0;
+let lastScrollY = window.scrollY;
+let lastScrollTs = performance.now();
+let fastScrollWarningNode = null;
+let fastScrollWarningHideTimer = 0;
 const previewTextMeasureCanvas = document.createElement("canvas");
 const previewTextMeasureContext = previewTextMeasureCanvas.getContext("2d");
 
@@ -120,6 +134,100 @@ const setShareStatus = (message = "") => {
 
   ctaShareStatus.textContent = message;
   ctaShareStatus.classList.toggle("is-visible", Boolean(message));
+};
+
+const createFastScrollWarningNode = () => {
+  if (fastScrollWarningNode || !document.body) {
+    return fastScrollWarningNode;
+  }
+
+  const node = document.createElement("div");
+  const image = document.createElement("img");
+
+  node.className = "fast-scroll-warning";
+  node.setAttribute("aria-hidden", "true");
+
+  image.className = "fast-scroll-warning__image";
+  image.src = FAST_SCROLL_WARNING_IMAGE_SOURCE;
+  image.alt = "";
+  image.decoding = "async";
+  image.loading = "eager";
+  image.width = 860;
+  image.height = 228;
+
+  node.append(image);
+  document.body.append(node);
+
+  fastScrollWarningNode = node;
+  return fastScrollWarningNode;
+};
+
+const showFastScrollWarning = () => {
+  const node = createFastScrollWarningNode();
+
+  if (!node) return;
+
+  node.classList.add("is-visible");
+  window.clearTimeout(fastScrollWarningHideTimer);
+  fastScrollWarningHideTimer = window.setTimeout(() => {
+    node.classList.remove("is-visible");
+  }, FAST_SCROLL_WARNING_VISIBLE_MS);
+};
+
+const getFastScrollThreshold = () => (
+  mobileBreakpoint.matches
+    ? FAST_SCROLL_MOBILE_THRESHOLD_PX_PER_SEC
+    : FAST_SCROLL_DESKTOP_THRESHOLD_PX_PER_SEC
+);
+
+const ignoreFastScrollForProgrammaticScroll = (
+  durationMs = FAST_SCROLL_IGNORE_PROGRAMMATIC_MS
+) => {
+  ignoreFastScrollUntil = Math.max(ignoreFastScrollUntil, performance.now() + durationMs);
+};
+
+const emitFastScrollEvent = (detail) => {
+  if (Array.isArray(window.dataLayer)) {
+    window.dataLayer.push({
+      event: "fast_scroll",
+      ...detail,
+    });
+  }
+
+  document.dispatchEvent(new CustomEvent(FAST_SCROLL_EVENT_NAME, { detail }));
+};
+
+const handleFastScrollDetection = () => {
+  const now = performance.now();
+  const currentY = window.scrollY;
+  const previousY = lastScrollY;
+  const deltaY = Math.abs(currentY - previousY);
+  const deltaT = now - lastScrollTs;
+
+  lastScrollY = currentY;
+  lastScrollTs = now;
+
+  if (deltaT <= 0 || now < ignoreFastScrollUntil || deltaY < FAST_SCROLL_MIN_DISTANCE_PX) {
+    return;
+  }
+
+  const threshold = getFastScrollThreshold();
+  const speedPxPerSec = (deltaY / deltaT) * 1000;
+
+  if (speedPxPerSec < threshold || now < fastScrollCooldownUntil) {
+    return;
+  }
+
+  fastScrollCooldownUntil = now + FAST_SCROLL_COOLDOWN_MS;
+
+  emitFastScrollEvent({
+    speedPxPerSec: Math.round(speedPxPerSec),
+    scrollY: Math.round(currentY),
+    deltaY: Math.round(deltaY),
+    direction: currentY >= previousY ? "down" : "up",
+    viewport: mobileBreakpoint.matches ? "mobile" : "desktop",
+    thresholdPxPerSec: threshold,
+  });
 };
 
 const applyResponsiveCopy = () => {
@@ -946,6 +1054,7 @@ if (heroCtaButton && featuresSection && firstFeatureCard) {
   heroCtaButton.addEventListener("click", (event) => {
     event.preventDefault();
     const targetNode = mobileBreakpoint.matches ? firstFeatureCard : featuresSection;
+    ignoreFastScrollForProgrammaticScroll();
     targetNode.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
@@ -991,8 +1100,11 @@ document.addEventListener("keydown", (event) => {
 applyResponsiveCopy();
 syncLabelPreview();
 fitOpenMarkerPopups();
+createFastScrollWarningNode();
 
+window.addEventListener("scroll", handleFastScrollDetection, { passive: true });
 window.addEventListener("resize", fitOpenMarkerPopups, { passive: true });
+document.addEventListener(FAST_SCROLL_EVENT_NAME, showFastScrollWarning);
 
 if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", fitOpenMarkerPopups, { passive: true });
