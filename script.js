@@ -1136,15 +1136,44 @@ const exportBoxVideoFromServer = async () => {
   const streamUrl = payload.streamUrl
     ? resolveHotboxRendererAssetUrl(payload.streamUrl)
     : downloadUrl;
-  const { blob, file } = await fetchBlobAsFile(downloadUrl, payload.fileName);
 
   return {
-    blob,
-    file,
     fileName: payload.fileName,
     downloadUrl,
     streamUrl,
   };
+};
+
+const hydrateServerRenderFile = async (exportPayload) => {
+  if (exportPayload?.blob && exportPayload?.file) {
+    return exportPayload;
+  }
+
+  if (!exportPayload?.downloadUrl || !exportPayload?.fileName) {
+    throw new Error("Server render payload is incomplete.");
+  }
+
+  const { blob, file } = await fetchBlobAsFile(exportPayload.downloadUrl, exportPayload.fileName);
+
+  return {
+    ...exportPayload,
+    blob,
+    file,
+  };
+};
+
+const startFileDownload = (fileUrl) => {
+  if (!fileUrl) {
+    throw new Error("Download URL is missing.");
+  }
+
+  const link = document.createElement("a");
+
+  link.href = fileUrl;
+  link.rel = "noreferrer";
+  document.body.append(link);
+  link.click();
+  link.remove();
 };
 
 const tryNativeShare = async (exportPayload) => {
@@ -1154,21 +1183,25 @@ const tryNativeShare = async (exportPayload) => {
 
   const shareTitle = "Подписанная коробка";
   const shareText = input?.value.trim() || shareTitle;
-  const { file, downloadUrl } = exportPayload ?? {};
+  const { downloadUrl } = exportPayload ?? {};
 
-  if (file) {
-    const fileSharePayload = {
-      files: [file],
-      title: shareTitle,
-      text: shareText,
-    };
+  if (downloadUrl) {
+    const hydratedPayload = await hydrateServerRenderFile(exportPayload).catch(() => null);
+    const file = hydratedPayload?.file;
+    if (file) {
+      const fileSharePayload = {
+        files: [file],
+        title: shareTitle,
+        text: shareText,
+      };
 
-    if (
-      typeof navigator.canShare !== "function" ||
-      navigator.canShare(fileSharePayload)
-    ) {
-      await navigator.share(fileSharePayload);
-      return true;
+      if (
+        typeof navigator.canShare !== "function" ||
+        navigator.canShare(fileSharePayload)
+      ) {
+        await navigator.share(fileSharePayload);
+        return true;
+      }
     }
   }
 
@@ -1229,7 +1262,11 @@ const handleShareButtonClick = async () => {
       console.error(error);
     }
 
-    downloadBlob(exportPayload.blob, exportPayload.fileName);
+    if (exportPayload.downloadUrl) {
+      startFileDownload(exportPayload.downloadUrl);
+    } else {
+      downloadBlob(exportPayload.blob, exportPayload.fileName);
+    }
     setShareStatus("");
   } catch (error) {
     console.error(error);
