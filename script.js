@@ -25,6 +25,9 @@ const FAST_SCROLL_DESKTOP_THRESHOLD_PX_PER_SEC = 2600;
 const FAST_SCROLL_MOBILE_THRESHOLD_PX_PER_SEC = 1600;
 const FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC = 1100;
 const FAST_SCROLL_TOUCH_MIN_DISTANCE_PX = 72;
+const RETURN_SCROLL_STORAGE_KEY = "hotbox:return-scroll-target";
+const CTA_RETURN_SCROLL_SELECTOR = "#cta-title";
+const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
 const defaultBoxLabelValue = "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)";
 const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
 const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
@@ -90,13 +93,56 @@ let lastTouchY = 0;
 let lastTouchX = 0;
 let lastTouchTs = 0;
 let touchFastScrollHandled = false;
+let hasClearedDefaultBoxLabel = false;
+let activeRendererAbortController = null;
 const previewTextMeasureCanvas = document.createElement("canvas");
 const previewTextMeasureContext = previewTextMeasureCanvas.getContext("2d");
+
+const scrollTargetIntoView = (selector, behavior = "smooth") => {
+  const targetNode = document.querySelector(selector);
+
+  if (!targetNode) {
+    return false;
+  }
+
+  targetNode.scrollIntoView({
+    behavior,
+    block: "start",
+  });
+
+  return true;
+};
+
+const restorePendingReturnScrollTarget = () => {
+  let targetSelector = "";
+
+  try {
+    targetSelector = sessionStorage.getItem(RETURN_SCROLL_STORAGE_KEY) || "";
+    sessionStorage.removeItem(RETURN_SCROLL_STORAGE_KEY);
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+
+  if (!targetSelector) {
+    return;
+  }
+
+  const scrollToTarget = () => {
+    scrollTargetIntoView(targetSelector);
+  };
+
+  requestAnimationFrame(scrollToTarget);
+  window.addEventListener("load", scrollToTarget, { once: true });
+  window.setTimeout(scrollToTarget, 120);
+};
 
 const syncFastScrollBaseline = () => {
   lastScrollY = window.scrollY;
   lastScrollTs = performance.now();
 };
+
+restorePendingReturnScrollTarget();
 
 const getRandomBoxLabel = (currentValue) => {
   const currentLabel = currentValue.trim();
@@ -130,6 +176,21 @@ const splitBoxLabelForPreview = (value) => {
   ];
 };
 
+const maybeClearDefaultBoxLabel = () => {
+  if (!input || hasClearedDefaultBoxLabel) {
+    return;
+  }
+
+  if (input.value.trim() !== defaultBoxLabelValue) {
+    hasClearedDefaultBoxLabel = true;
+    return;
+  }
+
+  input.value = "";
+  hasClearedDefaultBoxLabel = true;
+  syncLabelPreview();
+};
+
 const getShareButtonLabel = () => {
   if (!ctaShareButton) return "";
 
@@ -154,6 +215,55 @@ const setShareStatus = (message = "") => {
 
   ctaShareStatus.textContent = message;
   ctaShareStatus.classList.toggle("is-visible", Boolean(message));
+};
+
+const isAppleMobileDevice = () => {
+  const userAgent = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  const maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+
+  return (
+    /iPhone|iPad|iPod/i.test(userAgent) ||
+    (platform === "MacIntel" && maxTouchPoints > 1)
+  );
+};
+
+const shouldOpenSharePlayerPageInNewTab = () => !mobileBreakpoint.matches;
+
+const safelyCloseWindow = (targetWindow) => {
+  if (!targetWindow || targetWindow.closed) {
+    return;
+  }
+
+  try {
+    targetWindow.close();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const abortActiveRendererRequest = () => {
+  if (!activeRendererAbortController) {
+    return;
+  }
+
+  activeRendererAbortController.abort();
+  activeRendererAbortController = null;
+};
+
+const writePendingRenderRequest = () => {
+  try {
+    sessionStorage.setItem(
+      PENDING_RENDER_STORAGE_KEY,
+      JSON.stringify({
+        label: getHotboxLabelValue(),
+        rendererBaseUrl: HOTBOX_RENDERER_RESOLVED_BASE_URL,
+        createdAt: Date.now(),
+      })
+    );
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 const createFastScrollWarningNode = () => {
@@ -1082,7 +1192,10 @@ const buildHotboxRendererUrl = (pathname) => {
     throw new Error("Hotbox renderer base URL is not configured.");
   }
 
-  return new URL(pathname, HOTBOX_RENDERER_RESOLVED_BASE_URL).toString();
+  return new URL(
+    String(pathname || "").replace(/^\//, ""),
+    HOTBOX_RENDERER_RESOLVED_BASE_URL
+  ).toString();
 };
 
 const resolveHotboxRendererAssetUrl = (assetUrl) => {
@@ -1094,7 +1207,47 @@ const resolveHotboxRendererAssetUrl = (assetUrl) => {
     throw new Error("Hotbox renderer base URL is not configured.");
   }
 
-  return new URL(assetUrl, HOTBOX_RENDERER_RESOLVED_BASE_URL).toString();
+  return new URL(
+    String(assetUrl).replace(/^\//, ""),
+    HOTBOX_RENDERER_RESOLVED_BASE_URL
+  ).toString();
+};
+
+const buildSharePlayerPageUrl = (exportPayload) => {
+  const sharePageUrl = new URL("/share-player.html", `${window.location.origin}/`);
+
+  if (exportPayload?.streamUrl) {
+    sharePageUrl.searchParams.set("stream", exportPayload.streamUrl);
+  }
+
+  if (exportPayload?.downloadUrl) {
+    sharePageUrl.searchParams.set("download", exportPayload.downloadUrl);
+  }
+
+  if (exportPayload?.fileName) {
+    sharePageUrl.searchParams.set("fileName", exportPayload.fileName);
+  }
+
+  const label = getHotboxLabelValue();
+
+  if (label) {
+    sharePageUrl.searchParams.set("label", label);
+  }
+
+  return sharePageUrl.toString();
+};
+
+const buildPendingSharePlayerPageUrl = () => {
+  const sharePageUrl = new URL("/share-player.html", `${window.location.origin}/`);
+  const label = getHotboxLabelValue();
+
+  sharePageUrl.searchParams.set("pending", "1");
+
+  if (label) {
+    sharePageUrl.searchParams.set("label", label);
+  }
+
+  return sharePageUrl.toString();
 };
 
 const fetchBlobAsFile = async (fileUrl, fileName) => {
@@ -1122,7 +1275,9 @@ const fetchBlobAsFile = async (fileUrl, fileName) => {
   };
 };
 
-const exportBoxVideoFromServer = async () => {
+const exportBoxVideoFromServer = async (options = {}) => {
+  const { signal } = options;
+
   if (!HOTBOX_RENDERER_RESOLVED_BASE_URL) {
     throw new Error("Hotbox renderer is unavailable.");
   }
@@ -1135,6 +1290,7 @@ const exportBoxVideoFromServer = async () => {
     body: JSON.stringify({
       label: getHotboxLabelValue(),
     }),
+    signal,
   });
 
   if (!response.ok) {
@@ -1221,16 +1377,36 @@ const tryNativeShare = async (exportPayload) => {
 const handleShareButtonClick = async () => {
   if (isShareActionPending) return;
 
+  abortActiveRendererRequest();
+
+  const pendingSharePlayerUrl = buildPendingSharePlayerPageUrl();
+  const shouldOpenInNewTab = shouldOpenSharePlayerPageInNewTab();
+  const playerWindow = shouldOpenInNewTab ? window.open(pendingSharePlayerUrl, "_blank") : null;
+
+  if (!shouldOpenInNewTab) {
+    writePendingRenderRequest();
+    window.location.href = pendingSharePlayerUrl;
+    return;
+  }
+
   setShareStatus("");
   setShareButtonPending(true);
+  activeRendererAbortController = new AbortController();
 
   try {
     let exportPayload = null;
 
     try {
       setShareStatus("...это займет около 15 секунд.");
-      exportPayload = await exportBoxVideoFromServer();
+      exportPayload = await exportBoxVideoFromServer({
+        signal: activeRendererAbortController.signal,
+      });
     } catch (error) {
+      if (error?.name === "AbortError") {
+        setShareStatus("");
+        return;
+      }
+
       console.error(error);
       if (mobileBreakpoint.matches) {
         setShareStatus("Видео не получилось, сохраняем картинку.");
@@ -1246,6 +1422,21 @@ const handleShareButtonClick = async () => {
         }
       }
     }
+
+    if (playerWindow && exportPayload?.streamUrl) {
+      setShareStatus("Открываем видео...");
+      playerWindow.location.replace(buildSharePlayerPageUrl(exportPayload));
+      setShareStatus("");
+      return;
+    }
+
+    if (!playerWindow && exportPayload?.streamUrl) {
+      window.location.replace(buildSharePlayerPageUrl(exportPayload));
+      setShareStatus("");
+      return;
+    }
+
+    safelyCloseWindow(playerWindow);
 
     try {
       const didShare = await tryNativeShare(exportPayload);
@@ -1271,14 +1462,27 @@ const handleShareButtonClick = async () => {
     downloadBlob(exportPayload.blob, exportPayload.fileName);
     setShareStatus("");
   } catch (error) {
+    if (error?.name === "AbortError") {
+      setShareStatus("");
+      safelyCloseWindow(playerWindow);
+      return;
+    }
+
     console.error(error);
     setShareStatus("Не получилось подготовить коробку. Попробуйте еще раз.");
+    safelyCloseWindow(playerWindow);
   } finally {
+    activeRendererAbortController = null;
     setShareButtonPending(false);
   }
 };
 
+window.addEventListener("pagehide", abortActiveRendererRequest);
+window.addEventListener("beforeunload", abortActiveRendererRequest);
+
 if (input && preview && previewSecondary) {
+  input.addEventListener("focus", maybeClearDefaultBoxLabel);
+  input.addEventListener("pointerdown", maybeClearDefaultBoxLabel);
   input.addEventListener("input", syncLabelPreview);
 }
 
