@@ -15,10 +15,19 @@ const adaptiveCopyNodes = document.querySelectorAll("[data-mobile]");
 const mobileBreakpoint = window.matchMedia("(max-width: 767px)");
 const popupViewportGap = 12;
 const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
-const mobileBoxLabelBreakOverrides = {
+const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
+const boxLabelBreakOverrides = {
+  "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)": {
+    primary: "КОНТЕНТ\n2020–2024",
+    secondary: "(НЕ КАНТОВАТЬ)",
+  },
   "ОХВАТЫ (БЫЛО 10К, СТАЛО 300, НО МЫ ВЕРИМ)": {
     primary: "ОХВАТЫ",
     secondary: "(БЫЛО 10К, СТАЛО 300,\nНО МЫ ВЕРИМ)",
+  },
+  "НЕРВЫ (ЗАКОНЧИЛИСЬ ЕЩЁ В 2022)": {
+    primary: "НЕРВЫ",
+    secondary: "(ЗАКОНЧИЛИСЬ\nЕЩЁ В 2022)",
   },
 };
 const CTA_EXPORT_SOURCES = {
@@ -33,9 +42,27 @@ const boxLabelOptions = [
   "ОХВАТЫ (БЫЛО 10К, СТАЛО 300, НО МЫ ВЕРИМ)",
   "НЕРВЫ (ЗАКОНЧИЛИСЬ ЕЩЁ В 2022)",
 ];
+const videoExportMimeTypes = [
+  { mimeType: "video/mp4", extension: "mp4" },
+  { mimeType: 'video/mp4;codecs="avc1.42E01E,mp4a.40.2"', extension: "mp4" },
+  { mimeType: "video/webm", extension: "webm" },
+  { mimeType: 'video/webm;codecs="vp9,opus"', extension: "webm" },
+  { mimeType: 'video/webm;codecs="vp8,opus"', extension: "webm" },
+];
+const CTA_EXPORT_VIDEO_BOX_LAYOUT = {
+  frameWidth: 941,
+  frameHeight: 1672,
+  x: 292,
+  y: 1039,
+  width: 362,
+  height: 356,
+  hideAfterSeconds: 6,
+};
 
 let isShareActionPending = false;
 let ctaExportImagePromise = null;
+const previewTextMeasureCanvas = document.createElement("canvas");
+const previewTextMeasureContext = previewTextMeasureCanvas.getContext("2d");
 
 const getRandomBoxLabel = (currentValue) => {
   const currentLabel = currentValue.trim();
@@ -52,8 +79,8 @@ const splitBoxLabelForPreview = (value) => {
     return defaultBoxLabelPreview;
   }
 
-  if (mobileBreakpoint.matches && mobileBoxLabelBreakOverrides[trimmedValue]) {
-    const override = mobileBoxLabelBreakOverrides[trimmedValue];
+  if (boxLabelBreakOverrides[trimmedValue]) {
+    const override = boxLabelBreakOverrides[trimmedValue];
     return [override.primary, override.secondary];
   }
 
@@ -84,9 +111,7 @@ const setShareButtonPending = (isPending) => {
 
   ctaShareButton.disabled = isPending;
   ctaShareButton.textContent = isPending
-    ? mobileBreakpoint.matches
-      ? "Готовим коробку..."
-      : "Сохраняем коробку..."
+    ? "Готовим коробку..."
     : getShareButtonLabel();
 };
 
@@ -126,11 +151,29 @@ const applyResponsiveCopy = () => {
 };
 
 const syncLabelPreview = () => {
-  if (!preview || !previewSecondary || !input) return;
+  if (!preview || !previewSecondary || !input || !ctaLabelNote || !previewTextMeasureContext) {
+    return;
+  }
 
   const [primaryText, secondaryText] = splitBoxLabelForPreview(input.value);
-  preview.textContent = primaryText;
-  previewSecondary.textContent = secondaryText;
+  const labelStyles = window.getComputedStyle(preview);
+  const secondaryStyles = window.getComputedStyle(previewSecondary);
+  const textWidth = ctaLabelNote.clientWidth;
+
+  previewTextMeasureContext.font = buildCanvasFont(
+    labelStyles,
+    parseFloat(labelStyles.fontSize)
+  );
+  const primaryLines = wrapTextLine(previewTextMeasureContext, primaryText, textWidth);
+
+  previewTextMeasureContext.font = buildCanvasFont(
+    secondaryStyles,
+    parseFloat(secondaryStyles.fontSize)
+  );
+  const secondaryLines = wrapTextLine(previewTextMeasureContext, secondaryText, textWidth);
+
+  preview.textContent = primaryLines.join("\n");
+  previewSecondary.textContent = secondaryLines.join("\n");
 };
 
 const resetMarkerPopupFit = (marker) => {
@@ -349,7 +392,7 @@ const wrapTextLine = (ctx, text, maxWidth) => {
   });
 };
 
-const getExportFileName = () => {
+const getTimestampedExportFileName = (extension) => {
   const date = new Date();
   const datePart = [
     date.getFullYear(),
@@ -362,7 +405,342 @@ const getExportFileName = () => {
     String(date.getSeconds()).padStart(2, "0"),
   ].join("");
 
-  return `podpisannaya-korobka-${datePart}-${timePart}.jpg`;
+  return `hotbox-${datePart}-${timePart}.${extension}`;
+};
+
+const getImageExportFileName = () => getTimestampedExportFileName("jpg");
+
+const getVideoExportConfig = () => {
+  if (typeof MediaRecorder !== "function") {
+    return null;
+  }
+
+  if (typeof MediaRecorder.isTypeSupported !== "function") {
+    return { options: {}, extension: "webm" };
+  }
+
+  const matchedType = videoExportMimeTypes.find(({ mimeType }) =>
+    MediaRecorder.isTypeSupported(mimeType)
+  );
+
+  if (!matchedType) {
+    return null;
+  }
+
+  return {
+    options: { mimeType: matchedType.mimeType },
+    extension: matchedType.extension,
+  };
+};
+
+const waitForVideoReady = async (video) => {
+  if (!video) {
+    throw new Error("CTA export video node is missing.");
+  }
+
+  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+    return;
+  }
+
+  await new Promise((resolve, reject) => {
+    const handleLoadedData = () => {
+      cleanup();
+      resolve();
+    };
+    const handleError = () => {
+      cleanup();
+      reject(new Error("CTA export video failed to load."));
+    };
+    const cleanup = () => {
+      video.removeEventListener("loadeddata", handleLoadedData);
+      video.removeEventListener("error", handleError);
+    };
+
+    video.addEventListener("loadeddata", handleLoadedData, { once: true });
+    video.addEventListener("error", handleError, { once: true });
+  });
+};
+
+const createExportVideoNode = async () => {
+  const video = document.createElement("video");
+
+  video.preload = "auto";
+  video.playsInline = true;
+  video.muted = true;
+  video.src = CTA_EXPORT_VIDEO_SOURCE;
+
+  await new Promise((resolve, reject) => {
+    const handleLoadedMetadata = () => {
+      cleanup();
+      resolve();
+    };
+    const handleError = () => {
+      cleanup();
+      reject(new Error(`CTA export video failed to load: ${CTA_EXPORT_VIDEO_SOURCE}`));
+    };
+    const cleanup = () => {
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("error", handleError);
+    };
+
+    video.addEventListener("loadedmetadata", handleLoadedMetadata, { once: true });
+    video.addEventListener("error", handleError, { once: true });
+  });
+
+  await waitForVideoReady(video);
+
+  return video;
+};
+
+const getVideoBoxRect = (canvasWidth, canvasHeight) => {
+  const scaleX = canvasWidth / CTA_EXPORT_VIDEO_BOX_LAYOUT.frameWidth;
+  const scaleY = canvasHeight / CTA_EXPORT_VIDEO_BOX_LAYOUT.frameHeight;
+
+  return {
+    x: CTA_EXPORT_VIDEO_BOX_LAYOUT.x * scaleX,
+    y: CTA_EXPORT_VIDEO_BOX_LAYOUT.y * scaleY,
+    width: CTA_EXPORT_VIDEO_BOX_LAYOUT.width * scaleX,
+    height: CTA_EXPORT_VIDEO_BOX_LAYOUT.height * scaleY,
+  };
+};
+
+const drawVideoOverlayLabel = (ctx, video, canvasWidth, canvasHeight) => {
+  if (!ctaLabelNote || !previewSecondary) {
+    throw new Error("CTA label nodes are missing.");
+  }
+
+  if (video.currentTime >= CTA_EXPORT_VIDEO_BOX_LAYOUT.hideAfterSeconds) {
+    return;
+  }
+
+  const labelStyles = window.getComputedStyle(ctaLabelNote);
+  const secondaryStyles = window.getComputedStyle(previewSecondary);
+  const [primaryText, secondaryText] = splitBoxLabelForPreview(input?.value ?? "");
+  const boxRect = getVideoBoxRect(canvasWidth, canvasHeight);
+  const contentWidth = boxRect.width * 1.12;
+  const horizontalPadding = contentWidth * 0.04;
+  const verticalPadding = boxRect.height * 0.12;
+  const textWidth = contentWidth - horizontalPadding * 2;
+  const primaryFontSize = boxRect.height * 0.125;
+  const secondaryFontSize = boxRect.height * 0.09;
+  const primaryLineHeight = primaryFontSize * 1.08;
+  const secondaryLineHeight = secondaryFontSize * 1.12;
+  const gap = secondaryText ? boxRect.height * 0.02 : 0;
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.font = buildCanvasFont(labelStyles, primaryFontSize);
+  const primaryLines = wrapTextLine(ctx, primaryText, textWidth);
+  ctx.font = buildCanvasFont(secondaryStyles, secondaryFontSize);
+  const secondaryLines = wrapTextLine(ctx, secondaryText, textWidth);
+
+  const totalTextHeight =
+    primaryLines.length * primaryLineHeight +
+    secondaryLines.length * secondaryLineHeight +
+    gap;
+  const centerX = boxRect.x + boxRect.width / 2;
+  let lineY =
+    boxRect.y +
+    Math.max((boxRect.height - totalTextHeight) / 2, verticalPadding) +
+    boxRect.height * 0.045;
+
+  ctx.fillStyle = labelStyles.color;
+  ctx.font = buildCanvasFont(labelStyles, primaryFontSize);
+  primaryLines.forEach((line) => {
+    ctx.fillText(line, centerX, lineY);
+    lineY += primaryLineHeight;
+  });
+
+  if (secondaryLines.length > 0) {
+    lineY += gap;
+    ctx.fillStyle = secondaryStyles.color;
+    ctx.font = buildCanvasFont(secondaryStyles, secondaryFontSize);
+
+    secondaryLines.forEach((line) => {
+      ctx.fillText(line, centerX, lineY);
+      lineY += secondaryLineHeight;
+    });
+  }
+};
+
+const renderVideoFrame = (ctx, video, canvasWidth, canvasHeight) => {
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+  ctx.drawImage(video, 0, 0, canvasWidth, canvasHeight);
+  drawVideoOverlayLabel(ctx, video, canvasWidth, canvasHeight);
+};
+
+const renderVideoToCanvas = async (video, ctx, canvasWidth, canvasHeight) => {
+  renderVideoFrame(ctx, video, canvasWidth, canvasHeight);
+
+  await new Promise((resolve, reject) => {
+    let rafId = 0;
+    let frameCallbackId = 0;
+    let isFinished = false;
+
+    const cleanup = () => {
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+
+      if (frameCallbackId && typeof video.cancelVideoFrameCallback === "function") {
+        video.cancelVideoFrameCallback(frameCallbackId);
+      }
+
+      video.removeEventListener("ended", handleEnded);
+      video.removeEventListener("error", handleError);
+    };
+
+    const finish = (error) => {
+      if (isFinished) return;
+      isFinished = true;
+      cleanup();
+
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    };
+
+    const step = () => {
+      renderVideoFrame(ctx, video, canvasWidth, canvasHeight);
+
+      if (video.ended) {
+        finish();
+        return;
+      }
+
+      if (typeof video.requestVideoFrameCallback === "function") {
+        frameCallbackId = video.requestVideoFrameCallback(() => {
+          step();
+        });
+        return;
+      }
+
+      rafId = window.requestAnimationFrame(step);
+    };
+
+    const handleEnded = () => {
+      renderVideoFrame(ctx, video, canvasWidth, canvasHeight);
+      finish();
+    };
+    const handleError = () => {
+      finish(new Error("CTA export video playback failed."));
+    };
+
+    video.addEventListener("ended", handleEnded, { once: true });
+    video.addEventListener("error", handleError, { once: true });
+    step();
+  });
+};
+
+const stopMediaRecorder = (recorder) =>
+  new Promise((resolve) => {
+    if (recorder.state === "inactive") {
+      resolve();
+      return;
+    }
+
+    recorder.addEventListener("stop", () => resolve(), { once: true });
+    recorder.stop();
+  });
+
+const getMediaElementCaptureStream = (mediaElement) => {
+  try {
+    if (typeof mediaElement.captureStream === "function") {
+      return mediaElement.captureStream();
+    }
+
+    if (typeof mediaElement.mozCaptureStream === "function") {
+      return mediaElement.mozCaptureStream();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+
+  return null;
+};
+
+const exportBoxVideoFile = async () => {
+  const exportConfig = getVideoExportConfig();
+
+  if (!exportConfig) {
+    throw new Error("Video export is unsupported in this browser.");
+  }
+
+  if (typeof HTMLCanvasElement.prototype.captureStream !== "function") {
+    throw new Error("Canvas captureStream is unavailable.");
+  }
+
+  if (document.fonts?.ready) {
+    await document.fonts.ready;
+  }
+
+  const video = await createExportVideoNode();
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error("Canvas 2D context is unavailable.");
+  }
+
+  canvas.width = video.videoWidth || 720;
+  canvas.height = video.videoHeight || 1280;
+
+  const fps = 30;
+  const canvasStream = canvas.captureStream(fps);
+  const sourceStream = getMediaElementCaptureStream(video);
+  const composedStream = new MediaStream([
+    ...canvasStream.getVideoTracks(),
+    ...(sourceStream?.getAudioTracks() ?? []),
+  ]);
+  const chunks = [];
+  const recorder = new MediaRecorder(composedStream, exportConfig.options);
+
+  recorder.addEventListener("dataavailable", (event) => {
+    if (event.data && event.data.size > 0) {
+      chunks.push(event.data);
+    }
+  });
+
+  recorder.start(250);
+  video.currentTime = 0;
+
+  try {
+    await video.play();
+    await renderVideoToCanvas(video, ctx, canvas.width, canvas.height);
+  } finally {
+    video.pause();
+    await stopMediaRecorder(recorder);
+    composedStream.getTracks().forEach((track) => track.stop());
+    canvasStream.getTracks().forEach((track) => track.stop());
+    sourceStream?.getTracks().forEach((track) => track.stop());
+    video.removeAttribute("src");
+    video.load();
+  }
+
+  const blob = new Blob(chunks, {
+    type: recorder.mimeType || exportConfig.options.mimeType || "video/webm",
+  });
+
+  if (blob.size === 0) {
+    throw new Error("Video export failed.");
+  }
+
+  const fileName = getTimestampedExportFileName(exportConfig.extension);
+
+  return {
+    blob,
+    fileName,
+    file:
+      typeof File === "function"
+        ? new File([blob], fileName, {
+            type: blob.type || exportConfig.options.mimeType || "video/webm",
+            lastModified: Date.now(),
+          })
+        : blob,
+  };
 };
 
 const exportBoxImageBlob = async () => {
@@ -500,15 +878,29 @@ const handleShareButtonClick = async () => {
   setShareButtonPending(true);
 
   try {
-    const blob = await exportBoxImageBlob();
-    const fileName = getExportFileName();
-    const file =
-      typeof File === "function"
-        ? new File([blob], fileName, { type: "image/jpeg", lastModified: Date.now() })
-        : blob;
+    let exportPayload = null;
 
     try {
-      const didShare = await tryNativeFileShare(file);
+      setShareStatus("...это займет около 15 секунд.");
+      exportPayload = await exportBoxVideoFile();
+    } catch (error) {
+      console.error(error);
+      setShareStatus("Видео не получилось, сохраняем картинку.");
+      const blob = await exportBoxImageBlob();
+      const fileName = getImageExportFileName();
+
+      exportPayload = {
+        blob,
+        fileName,
+        file:
+          typeof File === "function"
+            ? new File([blob], fileName, { type: "image/jpeg", lastModified: Date.now() })
+            : blob,
+      };
+    }
+
+    try {
+      const didShare = await tryNativeFileShare(exportPayload.file);
 
       if (didShare) {
         setShareStatus("");
@@ -523,7 +915,7 @@ const handleShareButtonClick = async () => {
       console.error(error);
     }
 
-    downloadBlob(blob, fileName);
+    downloadBlob(exportPayload.blob, exportPayload.fileName);
     setShareStatus("");
   } catch (error) {
     console.error(error);
