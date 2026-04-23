@@ -87,6 +87,11 @@ let touchFastScrollHandled = false;
 const previewTextMeasureCanvas = document.createElement("canvas");
 const previewTextMeasureContext = previewTextMeasureCanvas.getContext("2d");
 
+const syncFastScrollBaseline = () => {
+  lastScrollY = window.scrollY;
+  lastScrollTs = performance.now();
+};
+
 const getRandomBoxLabel = (currentValue) => {
   const currentLabel = currentValue.trim();
   const candidates = boxLabelOptions.filter((option) => option !== currentLabel);
@@ -1162,20 +1167,6 @@ const hydrateServerRenderFile = async (exportPayload) => {
   };
 };
 
-const startFileDownload = (fileUrl) => {
-  if (!fileUrl) {
-    throw new Error("Download URL is missing.");
-  }
-
-  const link = document.createElement("a");
-
-  link.href = fileUrl;
-  link.rel = "noreferrer";
-  document.body.append(link);
-  link.click();
-  link.remove();
-};
-
 const tryNativeShare = async (exportPayload) => {
   if (!mobileBreakpoint.matches || typeof navigator.share !== "function") {
     return false;
@@ -1263,10 +1254,11 @@ const handleShareButtonClick = async () => {
     }
 
     if (exportPayload.downloadUrl) {
-      startFileDownload(exportPayload.downloadUrl);
-    } else {
-      downloadBlob(exportPayload.blob, exportPayload.fileName);
+      setShareStatus("Скачиваем видео...");
+      exportPayload = await hydrateServerRenderFile(exportPayload);
     }
+
+    downloadBlob(exportPayload.blob, exportPayload.fileName);
     setShareStatus("");
   } catch (error) {
     console.error(error);
@@ -1344,6 +1336,8 @@ applyResponsiveCopy();
 syncLabelPreview();
 fitOpenMarkerPopups();
 createFastScrollWarningNode();
+ignoreFastScrollForProgrammaticScroll(2200);
+syncFastScrollBaseline();
 
 window.addEventListener("scroll", handleFastScrollDetection, { passive: true });
 window.addEventListener("touchstart", handleTouchStart, { passive: true });
@@ -1351,6 +1345,10 @@ window.addEventListener("touchmove", handleTouchMove, { passive: true });
 window.addEventListener("touchend", handleTouchEnd, { passive: true });
 window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
 window.addEventListener("resize", fitOpenMarkerPopups, { passive: true });
+window.addEventListener("pageshow", () => {
+  ignoreFastScrollForProgrammaticScroll(2200);
+  syncFastScrollBaseline();
+});
 document.addEventListener(FAST_SCROLL_EVENT_NAME, showFastScrollWarning);
 
 if (window.visualViewport) {

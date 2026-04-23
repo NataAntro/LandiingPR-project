@@ -800,6 +800,8 @@ input {
 }
 
 .feature-card__media-visual {
+  position: relative;
+  aspect-ratio: 343 / 460;
   border-radius: var(--radius-xl);
   overflow: hidden;
 }
@@ -808,17 +810,27 @@ input {
 .feature-card__media-visual > picture > img,
 .feature-card__media-visual > picture img {
   width: 100%;
-  height: 460px;
+  height: 100%;
   object-fit: cover;
 }
 
-/* Card 2: zoom and crop to match Figma imageTransform (scale 0.88, ty 0.12) */
+.feature-card--light .feature-card__media-visual > picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Card 2: scale the crop with the media block instead of fixed pixels. */
 .feature-card--light .feature-card__media-visual > picture > img,
 .feature-card--light .feature-card__media-visual > picture img {
-  width: 390px;
+  position: absolute;
+  top: -13.6957%;
+  left: 0;
+  width: 113.7026%;
   height: auto;
+  margin-left: 0;
   max-width: none;
-  margin-top: -63px;
+  margin-top: 0;
 }
 
 /* Двухслойный медиа-блок (card 3) — как в Figma */
@@ -828,7 +840,7 @@ input {
 
 .feature-card__media--layered .feature-card__media-visual {
   position: relative;
-  height: 460px;
+  height: auto;
 }
 
 .feature-card__layer {
@@ -1123,35 +1135,121 @@ input {
   border: 0;
 }
 
-/* ─── Tablet breakpoint ──────────────────────────────────── */
-@media (max-width: 1439px) {
-  .container,
-  .container--narrow,
-  .features__grid,
-  .cta__visual,
-  .intro__image-frame {
-    width: calc(100vw - 32px);
-  }
-
-  .hero__content {
-    width: calc(100vw - 32px);
-  }
-
-  .hero__headline-wrap,
-  .hero__image-wrap {
-    width: min(600px, calc(100vw - 32px));
-  }
-
-  .hero__headline-wrap {
-    padding-top: 40px;
+/* ─── Small desktop ──────────────────────────────────────── */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .features {
+    min-height: auto;
   }
 
   .features__grid {
-    grid-template-columns: 1fr;
+    width: calc(100vw - 32px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .feature-card {
     min-height: auto;
+    padding: 48px 12px;
+  }
+
+  .feature-card__body {
+    min-height: 0;
+  }
+
+  .feature-card__body .feature-card__heading {
+    font-size: clamp(20px, 2vw, 24px);
+  }
+
+  .feature-card:first-child .feature-card__heading,
+  .feature-card:last-child .feature-card__heading {
+    width: 100%;
+    max-width: 306px;
+  }
+
+  .feature-card__body p {
+    font-size: 13px;
+  }
+
+  .feature-card .button {
+    padding-inline: 20px;
+    white-space: normal;
+  }
+}
+
+/* ─── Tablet breakpoint ──────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --tablet-side-gap: clamp(24px, 4vw, 32px);
+    --tablet-layout-width: 720px;
+    --tablet-media-width: 560px;
+    --tablet-card-media-width: 420px;
+  }
+
+  .container,
+  .container--narrow {
+    width: min(100%, var(--tablet-layout-width));
+    padding-inline: var(--tablet-side-gap);
+  }
+
+  .hero__content {
+    width: min(100%, var(--tablet-layout-width));
+    gap: 44px;
+  }
+
+  .intro__image-frame {
+    width: min(100%, var(--tablet-media-width));
+    height: auto;
+    aspect-ratio: 600 / 523.848;
+  }
+
+  .features {
+    min-height: auto;
+  }
+
+  .features__grid {
+    width: min(100%, var(--tablet-layout-width));
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .feature-card {
+    min-height: auto;
+    padding: 48px clamp(20px, 4vw, 28px);
+  }
+
+  .feature-card__body {
+    width: min(100%, 560px);
+    min-height: 0;
+    align-self: center;
+  }
+
+  .feature-card__body .feature-card__heading,
+  .feature-card:first-child .feature-card__heading,
+  .feature-card:last-child .feature-card__heading {
+    width: 100%;
+    max-width: 420px;
+    align-self: center;
+  }
+
+  .feature-card__media,
+  .feature-card__media--layered,
+  .feature-card .button {
+    width: min(100%, var(--tablet-card-media-width));
+    align-self: center;
+  }
+
+  .feature-card .button {
+    white-space: normal;
+  }
+
+  .cta__visual {
+    width: min(100%, var(--tablet-media-width));
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  .final__image-wrap {
+    width: min(100%, 375px);
   }
 }
 
