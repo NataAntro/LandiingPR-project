@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Готовая коробка</title>
+    <title>Коробка отпущения</title>
     <meta name="robots" content="noindex, nofollow" />
     <meta
       http-equiv="Content-Security-Policy"
@@ -210,10 +210,11 @@
       .share-player-spinner {
         width: 54px;
         height: 54px;
-        border-radius: 999px;
-        border: 3px solid rgba(36, 56, 136, 0.18);
-        border-top-color: var(--ink);
-        animation: share-player-spin 0.9s linear infinite;
+        display: block;
+        object-fit: contain;
+        animation: share-player-spin 2.4s linear infinite;
+        transform-origin: center;
+        filter: drop-shadow(0 10px 22px rgba(36, 56, 136, 0.12));
       }
 
       .share-player-loader-title {
@@ -410,7 +411,6 @@
         .share-player-spinner {
           width: 68px;
           height: 68px;
-          border-width: 4px;
         }
 
         .share-player-loader-title {
@@ -471,6 +471,12 @@
         opacity: 0.48;
         pointer-events: none;
       }
+
+      @media (prefers-reduced-motion: reduce) {
+        .share-player-spinner {
+          animation: none;
+        }
+      }
     </style>
   </head>
   <body>
@@ -482,7 +488,7 @@
       </div>
       <section class="share-player-card">
         <div class="share-player-copy">
-          <h1 class="share-player-title" id="share-player-title">Готовая коробка</h1>
+          <h1 class="share-player-title" id="share-player-title">Вот она, родимая</h1>
           <p class="share-player-status" id="share-player-status" hidden></p>
         </div>
 
@@ -490,7 +496,14 @@
           <div class="share-player-frame">
             <div class="share-player-loader" id="share-player-loader">
               <div class="share-player-loader-shell">
-                <div class="share-player-spinner" aria-hidden="true"></div>
+                <img
+                  class="share-player-spinner"
+                  src="./assets/loader.png"
+                  alt=""
+                  aria-hidden="true"
+                  width="114"
+                  height="112"
+                />
                 <p class="share-player-loader-title" id="share-player-loader-title">Собираем!</p>
                 <p class="share-player-loader-copy" id="share-player-loader-copy">15 секунд</p>
               </div>
@@ -508,10 +521,10 @@
 
           <aside class="share-player-sidebar">
             <div class="share-player-panel">
-              <p class="share-player-panel-kicker" id="share-player-panel-kicker">Видео-коробка</p>
-              <h2 class="share-player-panel-title" id="share-player-panel-title">Собираем видео</h2>
+              <p class="share-player-panel-kicker" id="share-player-panel-kicker">Подготовка к отправке</p>
+              <h2 class="share-player-panel-title" id="share-player-panel-title">Заклеиваем коробку</h2>
               <p class="share-player-panel-copy" id="share-player-panel-copy">
-                Подождите немного: как только рендер завершится, видео появится здесь автоматически.
+                Подождите чуть-чуть. Утрамбовываем ваши эмоции и щедро обматываем скотчем. Как только закончим, коробка появится здесь.
               </p>
             </div>
             <div class="share-player-actions">
@@ -519,7 +532,7 @@
                 Поделиться
               </button>
               <a class="share-player-link" id="share-player-download" href="/" aria-disabled="true">
-                Скачать
+                Сохранить на память
               </a>
             </div>
           </aside>

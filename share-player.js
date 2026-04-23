@@ -21,7 +21,7 @@ const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
 let streamUrl = params.get("stream") || "";
 let downloadUrl = params.get("download") || streamUrl;
 let fileName = params.get("fileName") || "hotbox.mp4";
-const label = params.get("label") || "Готовая коробка";
+const label = params.get("label") || "Коробка отпущения";
 const isPending = params.get("pending") === "1";
 let shareFilePromise = null;
 let shareFile = null;
@@ -85,52 +85,55 @@ const setPanelCopy = ({ kicker = "", title = "", copy = "" } = {}) => {
 
 const hasLiveOpener = () => Boolean(window.opener && !window.opener.closed);
 
-const applyPendingPresentation = (copy) => {
-  setLoaderCopy("Собираем!", "15 секунд");
+const applyPendingPresentation = ({
+  title = "Заклеиваем коробку",
+  copy,
+} = {}) => {
+  setLoaderCopy("Пакуем наболевшее!", "15 секунд");
   setPanelCopy({
-    kicker: "Видео-коробка",
-    title: "Собираем видео",
+    kicker: "Подготовка к отправке",
+    title,
     copy,
   });
 };
 
 const applyPlaybackLoadingPresentation = () => {
-  setLoaderCopy("Собираем!", "Готовим предпросмотр");
+  setLoaderCopy("Почти готово!", "Достаём маркер");
   setPanelCopy({
-    kicker: "Почти готово",
-    title: "Загружаем видео",
-    copy: "Рендер завершился. Сейчас подтянем ролик в плеер, и можно будет поделиться им или скачать файл.",
+    kicker: "Финишная прямая",
+    title: "Ставим на полку",
+    copy: "Коробка надёжно запечатана. Сейчас покажем её вам, и посылку можно будет смело отправлять.",
   });
 };
 
 const applyReadyPresentation = () => {
   setPanelCopy({
-    kicker: "Готово",
-    title: "Коробка собрана",
-    copy: "Видео уже в плеере. Можно делиться ссылкой или скачать файл на компьютер.",
+    kicker: "Готово!",
+    title: "Можно отправлять",
+    copy: "Ваша коробка отпущения собрана. Отправьте её тем, кто вас понимает, или скачайте на память об этом переезде.",
   });
 };
 
 const applyUnavailablePresentation = () => {
   if (isMobileViewport.matches) {
-    setLoaderCopy("Видео не найдено", "Попробуйте ещё раз");
+    setLoaderCopy("Коробка потерялась", "Вернитесь и попробуйте ещё раз");
     return;
   }
 
-  setLoaderCopy("Не получилось открыть", "Вернитесь назад и попробуйте ещё раз");
+  setLoaderCopy("Коробка потерялась", "Вернитесь и попробуйте ещё раз");
   setPanelCopy({
-    kicker: "Нужен новый запуск",
-    title: "Видео ещё не открыто",
-    copy: "Похоже, эта ссылка уже не может подтянуть готовый ролик. Вернитесь назад и запустите сборку коробки ещё раз.",
+    kicker: "Ой-ой",
+    title: "Посылка не найдена",
+    copy: "Коробка затерялась на складе, достать её уже не выйдет. Вернитесь на шаг назад, чтобы собрать новую!",
   });
 };
 
 const applyRenderErrorPresentation = () => {
-  setLoaderCopy("Не получилось собрать", "Попробуйте ещё раз");
+  setLoaderCopy("Скотч отклеился", "Попробуйте ещё раз");
   setPanelCopy({
-    kicker: "Рендер остановился",
-    title: "Видео не собралось",
-    copy: "Сервис не смог закончить подготовку ролика. Вернитесь назад и попробуйте снова.",
+    kicker: "Что-то пошло не так",
+    title: "Коробка порвалась",
+    copy: "Картон не выдержал накала страстей. Вернитесь назад — возьмём коробку поплотнее и попробуем ещё раз.",
   });
 };
 
@@ -228,8 +231,14 @@ const requestServerRenderFromPendingPage = async () => {
   if (!pendingRequest) {
     applyPendingPresentation(
       hasLiveOpener()
-        ? "Подождите немного: как только рендер завершится, видео появится здесь автоматически."
-        : "Видео всё ещё готовится на сервисе. Если эта вкладка не обновится в течение минуты, вернитесь назад и запустите сборку ещё раз."
+        ? {
+            title: "Заклеиваем коробку",
+            copy: "Утрамбовываем эмоции и щедро обматываем скотчем. Ещё пара секунд — и коробка появится на экране.",
+          }
+        : {
+            title: "Эмоций оказалось многовато",
+            copy: "Коробка сопротивляется! Если за минуту не закроем крышку — вернитесь на шаг назад, попробуем заново.",
+          }
     );
     setStatus("");
     return;
@@ -277,7 +286,7 @@ const requestServerRenderFromPendingPage = async () => {
 
     console.error(error);
     applyRenderErrorPresentation();
-    setStatus("Рендер не завершился");
+    setStatus("Упаковка сорвалась");
   } finally {
     pendingRenderAbortController = null;
   }
@@ -419,13 +428,16 @@ const scrollOpenerToLandingTarget = () => {
   return true;
 };
 
-setTitle("Ваша коробка");
+setTitle("Вот она, родимая");
 setDownloadState();
 
 if (!streamUrl) {
   if (isPending) {
     applyPendingPresentation(
-      "Подождите немного: как только рендер завершится, видео появится здесь автоматически."
+      {
+        title: "Заклеиваем коробку",
+        copy: "Утрамбовываем эмоции и щедро обматываем скотчем. Ещё пара секунд — и коробка появится на экране.",
+      }
     );
   } else {
     applyUnavailablePresentation();
