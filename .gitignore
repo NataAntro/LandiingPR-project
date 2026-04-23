@@ -34,3 +34,6 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+
+# Local deployment notes
+DEPLOY_VPS.md
