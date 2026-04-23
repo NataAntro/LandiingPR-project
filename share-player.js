@@ -17,26 +17,22 @@ const RETURN_SCROLL_STORAGE_KEY = "hotbox:return-scroll-target";
 const LANDING_RETURN_TARGET_SELECTOR = "#cta-title";
 const LANDING_RETURN_URL = `/${LANDING_RETURN_TARGET_SELECTOR}`;
 const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
+const PENDING_LONG_DELAY_MS = 30_000;
+const CLIENT_FALLBACK_DELAY_MS = 60_000;
 
 let streamUrl = params.get("stream") || "";
 let downloadUrl = params.get("download") || streamUrl;
 let fileName = params.get("fileName") || "hotbox.mp4";
 const label = params.get("label") || "Коробка отпущения";
 const isPending = params.get("pending") === "1";
+const pendingRendererBaseUrlParam = params.get("rendererBaseUrl") || "";
 let shareFilePromise = null;
 let shareFile = null;
 let pendingRenderAbortController = null;
-
-const isAppleMobileDevice = () => {
-  const userAgent = navigator.userAgent || "";
-  const platform = navigator.platform || "";
-  const maxTouchPoints = Number(navigator.maxTouchPoints || 0);
-
-  return (
-    /iPhone|iPad|iPod/i.test(userAgent) ||
-    (platform === "MacIntel" && maxTouchPoints > 1)
-  );
-};
+let pendingLongWaitTimeoutId = null;
+let clientFallbackTimeoutId = null;
+let isClientFallbackRunning = false;
+let localVideoObjectUrl = "";
 
 const setStatus = (message) => {
   if (!statusNode) return;
@@ -83,17 +79,63 @@ const setPanelCopy = ({ kicker = "", title = "", copy = "" } = {}) => {
   }
 };
 
-const hasLiveOpener = () => Boolean(window.opener && !window.opener.closed);
+const clearPendingLongWaitTimer = () => {
+  if (!pendingLongWaitTimeoutId) {
+    return;
+  }
+
+  window.clearTimeout(pendingLongWaitTimeoutId);
+  pendingLongWaitTimeoutId = null;
+};
+
+const clearClientFallbackTimer = () => {
+  if (!clientFallbackTimeoutId) {
+    return;
+  }
+
+  window.clearTimeout(clientFallbackTimeoutId);
+  clientFallbackTimeoutId = null;
+};
+
+const clearPendingTimers = () => {
+  clearPendingLongWaitTimer();
+  clearClientFallbackTimer();
+};
+
+const revokeLocalVideoObjectUrl = () => {
+  if (!localVideoObjectUrl) {
+    return;
+  }
+
+  URL.revokeObjectURL(localVideoObjectUrl);
+  localVideoObjectUrl = "";
+};
 
 const applyPendingPresentation = ({
   title = "Заклеиваем коробку",
-  copy,
+  copy = "Утрамбовываем эмоции и щедро обматываем скотчем. Ещё пара секунд — и коробка появится на экране.",
 } = {}) => {
   setLoaderCopy("Пакуем наболевшее!", "15 секунд");
   setPanelCopy({
     kicker: "Подготовка к отправке",
     title,
     copy,
+  });
+};
+
+const applyPendingLongWaitPresentation = () => {
+  applyPendingPresentation({
+    title: "Эмоций оказалось многовато",
+    copy: "Коробка сопротивляется! Если за минуту не закроем крышку — вернитесь на шаг назад, попробуем заново.",
+  });
+};
+
+const applyClientFallbackPresentation = () => {
+  setLoaderCopy("Почти готово!", "Собираем сами");
+  setPanelCopy({
+    kicker: "Запасной маршрут",
+    title: "Готовим коробку прямо здесь",
+    copy: "Сервер задержался, поэтому собираем видео прямо в браузере. Это займёт ещё немного времени, зато коробка останется с вами.",
   });
 };
 
@@ -115,12 +157,14 @@ const applyReadyPresentation = () => {
 };
 
 const applyUnavailablePresentation = () => {
+  clearPendingTimers();
+
+  setLoaderCopy("Коробка потерялась", "Вернитесь и попробуйте ещё раз");
+
   if (isMobileViewport.matches) {
-    setLoaderCopy("Коробка потерялась", "Вернитесь и попробуйте ещё раз");
     return;
   }
 
-  setLoaderCopy("Коробка потерялась", "Вернитесь и попробуйте ещё раз");
   setPanelCopy({
     kicker: "Ой-ой",
     title: "Посылка не найдена",
@@ -129,6 +173,7 @@ const applyUnavailablePresentation = () => {
 };
 
 const applyRenderErrorPresentation = () => {
+  clearPendingTimers();
   setLoaderCopy("Скотч отклеился", "Попробуйте ещё раз");
   setPanelCopy({
     kicker: "Что-то пошло не так",
@@ -142,13 +187,7 @@ const setDownloadState = () => {
     return;
   }
 
-  if (isMobileViewport.matches) {
-    downloadLink.setAttribute("aria-disabled", "true");
-    downloadLink.removeAttribute("href");
-    return;
-  }
-
-  if (!downloadUrl) {
+  if (isMobileViewport.matches || !downloadUrl) {
     downloadLink.setAttribute("aria-disabled", "true");
     downloadLink.removeAttribute("href");
     return;
@@ -197,7 +236,7 @@ const readPendingRenderRequest = () => {
 
     const payload = JSON.parse(rawPayload);
 
-    if (!payload?.rendererBaseUrl || !payload?.label) {
+    if (!payload || typeof payload !== "object") {
       return null;
     }
 
@@ -206,6 +245,15 @@ const readPendingRenderRequest = () => {
     console.error(error);
     return null;
   }
+};
+
+const getPendingRenderContext = () => {
+  const pendingRequest = readPendingRenderRequest();
+
+  return {
+    label: pendingRequest?.label || label,
+    rendererBaseUrl: pendingRequest?.rendererBaseUrl || pendingRendererBaseUrlParam,
+  };
 };
 
 const clearPendingRenderRequest = () => {
@@ -225,71 +273,18 @@ const abortPendingRender = () => {
   pendingRenderAbortController = null;
 };
 
-const requestServerRenderFromPendingPage = async () => {
-  const pendingRequest = readPendingRenderRequest();
+const canUseClientFallback = () =>
+  Boolean(window.HotboxVideoRenderer?.canRenderVideoInBrowser?.());
 
-  if (!pendingRequest) {
-    applyPendingPresentation(
-      hasLiveOpener()
-        ? {
-            title: "Заклеиваем коробку",
-            copy: "Утрамбовываем эмоции и щедро обматываем скотчем. Ещё пара секунд — и коробка появится на экране.",
-          }
-        : {
-            title: "Эмоций оказалось многовато",
-            copy: "Коробка сопротивляется! Если за минуту не закроем крышку — вернитесь на шаг назад, попробуем заново.",
-          }
-    );
-    setStatus("");
-    return;
-  }
+const schedulePendingLongWaitPresentation = () => {
+  clearPendingLongWaitTimer();
+  pendingLongWaitTimeoutId = window.setTimeout(() => {
+    pendingLongWaitTimeoutId = null;
 
-  pendingRenderAbortController = new AbortController();
-
-  try {
-    const response = await fetch(resolveRendererUrl(pendingRequest.rendererBaseUrl, "/render"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        label: pendingRequest.label,
-      }),
-      signal: pendingRenderAbortController.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Renderer request failed: ${response.status}`);
+    if (!streamUrl && isPending && !isClientFallbackRunning) {
+      applyPendingLongWaitPresentation();
     }
-
-    const payload = await response.json();
-
-    streamUrl = resolveRendererUrl(pendingRequest.rendererBaseUrl, payload.streamUrl);
-    downloadUrl = payload.downloadUrl
-      ? resolveRendererUrl(pendingRequest.rendererBaseUrl, payload.downloadUrl)
-      : streamUrl;
-    fileName = payload.fileName || fileName;
-
-    clearPendingRenderRequest();
-    pendingRenderAbortController = null;
-    window.location.replace(
-      buildResolvedSharePlayerUrl({
-        streamUrl,
-        downloadUrl,
-        fileName,
-      })
-    );
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      return;
-    }
-
-    console.error(error);
-    applyRenderErrorPresentation();
-    setStatus("Упаковка сорвалась");
-  } finally {
-    pendingRenderAbortController = null;
-  }
+  }, PENDING_LONG_DELAY_MS);
 };
 
 const fetchShareFile = async () => {
@@ -316,12 +311,12 @@ const fetchShareFile = async () => {
 };
 
 const primeShareFile = () => {
-  if (!downloadUrl) {
-    return null;
-  }
-
   if (shareFile) {
     return Promise.resolve(shareFile);
+  }
+
+  if (!downloadUrl) {
+    return null;
   }
 
   if (!shareFilePromise) {
@@ -339,6 +334,190 @@ const primeShareFile = () => {
   return shareFilePromise;
 };
 
+const loadVideoIntoPlayer = () => {
+  if (!streamUrl) {
+    return;
+  }
+
+  let didResolve = false;
+  const finalizeReady = () => {
+    if (didResolve) {
+      return;
+    }
+
+    didResolve = true;
+    clearPendingTimers();
+    setLoaderVisible(false);
+    setStatus("");
+    applyReadyPresentation();
+    shareButton.disabled = false;
+    videoNode.play().catch(() => {});
+  };
+  const finalizeError = () => {
+    if (didResolve) {
+      return;
+    }
+
+    didResolve = true;
+    applyRenderErrorPresentation();
+    setLoaderVisible(true);
+    setStatus("Упаковка сорвалась");
+    shareButton.disabled = false;
+  };
+
+  applyPlaybackLoadingPresentation();
+  setLoaderVisible(true);
+  setStatus("");
+  setDownloadState();
+  shareButton.disabled = true;
+
+  videoNode.pause();
+  videoNode.removeAttribute("src");
+  videoNode.load();
+  videoNode.addEventListener("loadeddata", finalizeReady, { once: true });
+  videoNode.addEventListener("canplay", finalizeReady, { once: true });
+  videoNode.addEventListener("error", finalizeError, { once: true });
+  videoNode.src = streamUrl;
+  videoNode.load();
+
+  primeShareFile()?.catch((error) => {
+    console.error(error);
+    return null;
+  });
+};
+
+const startClientFallbackRender = async () => {
+  if (isClientFallbackRunning || streamUrl) {
+    return;
+  }
+
+  if (!canUseClientFallback()) {
+    applyRenderErrorPresentation();
+    setStatus("Упаковка сорвалась");
+    return;
+  }
+
+  isClientFallbackRunning = true;
+  clearPendingTimers();
+  abortPendingRender();
+  applyClientFallbackPresentation();
+  setLoaderVisible(true);
+  setStatus("Сервер задержался, поэтому собираем коробку прямо в браузере.");
+  shareButton.disabled = true;
+
+  try {
+    const exportPayload = await window.HotboxVideoRenderer.renderVideoFile({ label });
+
+    revokeLocalVideoObjectUrl();
+    localVideoObjectUrl = URL.createObjectURL(exportPayload.blob);
+    streamUrl = localVideoObjectUrl;
+    downloadUrl = localVideoObjectUrl;
+    fileName = exportPayload.fileName || fileName;
+    shareFile = exportPayload.file || null;
+    shareFilePromise = shareFile ? Promise.resolve(shareFile) : null;
+
+    clearPendingRenderRequest();
+    loadVideoIntoPlayer();
+  } catch (error) {
+    console.error(error);
+    applyRenderErrorPresentation();
+    setStatus("Упаковка сорвалась");
+  } finally {
+    isClientFallbackRunning = false;
+  }
+};
+
+const scheduleClientFallbackRender = () => {
+  clearClientFallbackTimer();
+
+  if (!isPending || streamUrl || !canUseClientFallback()) {
+    return;
+  }
+
+  clientFallbackTimeoutId = window.setTimeout(() => {
+    clientFallbackTimeoutId = null;
+
+    if (!streamUrl && isPending) {
+      startClientFallbackRender();
+    }
+  }, CLIENT_FALLBACK_DELAY_MS);
+};
+
+const requestServerRenderFromPendingPage = async () => {
+  const pendingContext = getPendingRenderContext();
+
+  if (!pendingContext.rendererBaseUrl) {
+    if (!canUseClientFallback()) {
+      applyRenderErrorPresentation();
+      setStatus("Упаковка сорвалась");
+    }
+
+    return;
+  }
+
+  pendingRenderAbortController = new AbortController();
+
+  try {
+    const response = await fetch(resolveRendererUrl(pendingContext.rendererBaseUrl, "/render"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        label: pendingContext.label,
+      }),
+      signal: pendingRenderAbortController.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Renderer request failed: ${response.status}`);
+    }
+
+    const payload = await response.json();
+
+    if (!payload?.streamUrl && !payload?.downloadUrl) {
+      throw new Error("Renderer response is incomplete.");
+    }
+
+    streamUrl = payload.streamUrl
+      ? resolveRendererUrl(pendingContext.rendererBaseUrl, payload.streamUrl)
+      : resolveRendererUrl(pendingContext.rendererBaseUrl, payload.downloadUrl);
+    downloadUrl = payload.downloadUrl
+      ? resolveRendererUrl(pendingContext.rendererBaseUrl, payload.downloadUrl)
+      : streamUrl;
+    fileName = payload.fileName || fileName;
+    shareFile = null;
+    shareFilePromise = null;
+
+    clearPendingTimers();
+    clearPendingRenderRequest();
+    pendingRenderAbortController = null;
+    window.location.replace(
+      buildResolvedSharePlayerUrl({
+        streamUrl,
+        downloadUrl,
+        fileName,
+      })
+    );
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      return;
+    }
+
+    console.error(error);
+
+    if (!canUseClientFallback()) {
+      applyRenderErrorPresentation();
+      setStatus("Упаковка сорвалась");
+      return;
+    }
+
+    setStatus("Сервер задержался. Ждём ещё немного и подключим запасной маршрут.");
+  } finally {
+    pendingRenderAbortController = null;
+  }
+};
+
 const shareCurrentVideo = async () => {
   if (!streamUrl) {
     return;
@@ -346,7 +525,7 @@ const shareCurrentVideo = async () => {
 
   if (typeof navigator.share === "function") {
     try {
-      const file = await primeShareFile().catch(() => null);
+      const file = await primeShareFile()?.catch(() => null);
 
       if (file) {
         const filePayload = {
@@ -433,51 +612,25 @@ setDownloadState();
 
 if (!streamUrl) {
   if (isPending) {
-    applyPendingPresentation(
-      {
-        title: "Заклеиваем коробку",
-        copy: "Утрамбовываем эмоции и щедро обматываем скотчем. Ещё пара секунд — и коробка появится на экране.",
-      }
-    );
+    applyPendingPresentation();
+    schedulePendingLongWaitPresentation();
+    scheduleClientFallbackRender();
+    requestServerRenderFromPendingPage();
   } else {
     applyUnavailablePresentation();
   }
-  setLoaderVisible(true);
-  setStatus("");
-  shareButton.disabled = true;
 
-  if (isPending) {
-    requestServerRenderFromPendingPage();
-  }
-} else {
-  applyPlaybackLoadingPresentation();
   setLoaderVisible(true);
   setStatus("");
-  videoNode.src = streamUrl;
-  videoNode.load();
-  const revealVideo = () => {
-    setLoaderVisible(false);
-    setStatus("");
-    applyReadyPresentation();
-    videoNode.play().catch(() => {});
-  };
-  videoNode.addEventListener("loadeddata", revealVideo, { once: true });
-  videoNode.addEventListener("canplay", revealVideo, { once: true });
   shareButton.disabled = true;
-  downloadLink.removeAttribute("aria-disabled");
-  primeShareFile()
-    .catch((error) => {
-      console.error(error);
-      return null;
-    })
-    .finally(() => {
-      shareButton.disabled = false;
-    });
+} else {
+  loadVideoIntoPlayer();
 }
 
 shareButton?.addEventListener("click", shareCurrentVideo);
 
 backButton?.addEventListener("click", () => {
+  clearPendingTimers();
   abortPendingRender();
   clearPendingRenderRequest();
   rememberReturnTarget();
@@ -495,5 +648,13 @@ backButton?.addEventListener("click", () => {
   window.location.replace(LANDING_RETURN_URL);
 });
 
-window.addEventListener("pagehide", abortPendingRender);
-window.addEventListener("beforeunload", abortPendingRender);
+window.addEventListener("pagehide", () => {
+  clearPendingTimers();
+  abortPendingRender();
+  revokeLocalVideoObjectUrl();
+});
+window.addEventListener("beforeunload", () => {
+  clearPendingTimers();
+  abortPendingRender();
+  revokeLocalVideoObjectUrl();
+});

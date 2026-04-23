@@ -1247,6 +1247,10 @@ const buildPendingSharePlayerPageUrl = () => {
     sharePageUrl.searchParams.set("label", label);
   }
 
+  if (HOTBOX_RENDERER_RESOLVED_BASE_URL) {
+    sharePageUrl.searchParams.set("rendererBaseUrl", HOTBOX_RENDERER_RESOLVED_BASE_URL);
+  }
+
   return sharePageUrl.toString();
 };
 
@@ -1377,104 +1381,21 @@ const tryNativeShare = async (exportPayload) => {
 const handleShareButtonClick = async () => {
   if (isShareActionPending) return;
 
-  abortActiveRendererRequest();
-
   const pendingSharePlayerUrl = buildPendingSharePlayerPageUrl();
   const shouldOpenInNewTab = shouldOpenSharePlayerPageInNewTab();
   const playerWindow = shouldOpenInNewTab ? window.open(pendingSharePlayerUrl, "_blank") : null;
 
-  if (!shouldOpenInNewTab) {
-    writePendingRenderRequest();
-    window.location.href = pendingSharePlayerUrl;
+  writePendingRenderRequest();
+
+  if (!shouldOpenInNewTab || !playerWindow) {
+    window.location.assign(pendingSharePlayerUrl);
     return;
   }
 
-  setShareStatus("");
-  setShareButtonPending(true);
-  activeRendererAbortController = new AbortController();
-
-  try {
-    let exportPayload = null;
-
-    try {
-      setShareStatus("...это займет около 15 секунд.");
-      exportPayload = await exportBoxVideoFromServer({
-        signal: activeRendererAbortController.signal,
-      });
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        setShareStatus("");
-        return;
-      }
-
-      console.error(error);
-      if (mobileBreakpoint.matches) {
-        setShareStatus("Видео не получилось, сохраняем картинку.");
-        exportPayload = await exportBoxImageFile();
-      } else {
-        try {
-          setShareStatus("Картон не по ГОСТу, пробуем ещё раз.");
-          exportPayload = await exportBoxVideoFile();
-        } catch (clientVideoError) {
-          console.error(clientVideoError);
-          setShareStatus("Видео не получилось, сохраняем картинку.");
-          exportPayload = await exportBoxImageFile();
-        }
-      }
-    }
-
-    if (playerWindow && exportPayload?.streamUrl) {
-      setShareStatus("Открываем видео...");
-      playerWindow.location.replace(buildSharePlayerPageUrl(exportPayload));
-      setShareStatus("");
-      return;
-    }
-
-    if (!playerWindow && exportPayload?.streamUrl) {
-      window.location.replace(buildSharePlayerPageUrl(exportPayload));
-      setShareStatus("");
-      return;
-    }
-
-    safelyCloseWindow(playerWindow);
-
-    try {
-      const didShare = await tryNativeShare(exportPayload);
-
-      if (didShare) {
-        setShareStatus("");
-        return;
-      }
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        setShareStatus("");
-        return;
-      }
-
-      console.error(error);
-    }
-
-    if (exportPayload.downloadUrl) {
-      setShareStatus("Скачиваем видео...");
-      exportPayload = await hydrateServerRenderFile(exportPayload);
-    }
-
-    downloadBlob(exportPayload.blob, exportPayload.fileName);
+  setShareStatus("Открыли коробку в новой вкладке.");
+  window.setTimeout(() => {
     setShareStatus("");
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      setShareStatus("");
-      safelyCloseWindow(playerWindow);
-      return;
-    }
-
-    console.error(error);
-    setShareStatus("Не получилось подготовить коробку. Попробуйте еще раз.");
-    safelyCloseWindow(playerWindow);
-  } finally {
-    activeRendererAbortController = null;
-    setShareButtonPending(false);
-  }
+  }, 2200);
 };
 
 window.addEventListener("pagehide", abortActiveRendererRequest);
