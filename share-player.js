@@ -66,6 +66,8 @@ const setLoaderVisible = (isVisible) => {
   loaderNode.hidden = !isVisible;
 };
 
+const hasLiveOpener = () => Boolean(window.opener && !window.opener.closed);
+
 const setDownloadState = () => {
   if (!downloadLink) {
     return;
@@ -158,6 +160,12 @@ const requestServerRenderFromPendingPage = async () => {
   const pendingRequest = readPendingRenderRequest();
 
   if (!pendingRequest) {
+    if (hasLiveOpener()) {
+      setLoaderCopy("Собираем!", "15 секунд");
+      setStatus("");
+      return;
+    }
+
     setLoaderCopy("Видео не найдено", "Попробуйте ещё раз");
     return;
   }

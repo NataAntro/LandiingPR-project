@@ -122,6 +122,10 @@
         text-align: center;
       }
 
+      .share-player-copy {
+        margin-bottom: 12px;
+      }
+
       .share-player-status {
         margin: 0 0 8px;
         color: var(--ink-muted);
@@ -140,6 +144,17 @@
         border-radius: 22px;
         background: rgba(255, 255, 255, 0.66);
         border: 1px solid rgba(36, 56, 136, 0.08);
+      }
+
+      .share-player-body {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .share-player-sidebar {
+        display: flex;
+        flex-direction: column;
       }
 
       .share-player-video {
@@ -215,7 +230,6 @@
       .share-player-actions {
         display: flex;
         gap: 12px;
-        margin-top: 14px;
       }
 
       .share-player-button,
@@ -257,38 +271,109 @@
 
       @media (min-width: 768px) {
         .share-player-page {
-          gap: 4px;
-          padding: 8px 16px 14px;
+          gap: 18px;
+          padding: 28px 32px 36px;
         }
 
         .share-player-topbar,
         .share-player-card {
-          width: min(100%, 360px);
+          width: min(100%, 1040px);
         }
 
         .share-player-card {
-          padding: 14px;
-          border-radius: 24px;
+          padding: 28px;
+          border-radius: 34px;
+        }
+
+        .share-player-back {
+          min-height: 48px;
+          padding: 0 20px;
+          font-size: 20px;
+        }
+
+        .share-player-back::before {
+          font-size: 20px;
+        }
+
+        .share-player-copy {
+          margin-bottom: 22px;
         }
 
         .share-player-title {
-          margin-bottom: 6px;
-          font-size: 32px;
+          margin-bottom: 12px;
+          font-size: clamp(48px, 5vw, 68px);
+          text-align: left;
+        }
+
+        .share-player-status {
+          margin-bottom: 0;
+          font-size: 18px;
+          text-align: left;
+        }
+
+        .share-player-body {
+          display: grid;
+          grid-template-columns: minmax(320px, 430px) minmax(240px, 1fr);
+          align-items: stretch;
+          gap: 28px;
+        }
+
+        .share-player-frame {
+          width: 100%;
+          max-width: 430px;
+          margin: 0 auto;
+        }
+
+        .share-player-sidebar {
+          justify-content: flex-end;
+          min-height: 100%;
+          padding: 24px;
+          border-radius: 28px;
+          background: rgba(255, 255, 255, 0.44);
+          border: 1px solid rgba(36, 56, 136, 0.08);
         }
 
         .share-player-frame,
         .share-player-video {
-          max-height: min(58vh, 540px);
+          max-height: min(74vh, 780px);
+        }
+
+        .share-player-loader {
+          padding: 30px;
+        }
+
+        .share-player-loader-shell {
+          max-width: 360px;
+          padding: 32px 28px;
+          border-radius: 28px;
+          gap: 18px;
+        }
+
+        .share-player-spinner {
+          width: 68px;
+          height: 68px;
+          border-width: 4px;
+        }
+
+        .share-player-loader-title {
+          font-size: clamp(30px, 3vw, 42px);
+        }
+
+        .share-player-loader-copy {
+          font-size: 18px;
         }
 
         .share-player-actions {
-          margin-top: 10px;
+          flex-direction: column;
+          gap: 16px;
+          margin-top: auto;
         }
 
         .share-player-button,
         .share-player-link {
-          min-height: 48px;
-          font-size: 15px;
+          width: 100%;
+          min-height: 60px;
+          font-size: 18px;
         }
       }
 
@@ -307,35 +392,41 @@
         </button>
       </div>
       <section class="share-player-card">
-        <h1 class="share-player-title" id="share-player-title">Готовая коробка</h1>
-        <p class="share-player-status" id="share-player-status" hidden></p>
-
-        <div class="share-player-frame">
-          <div class="share-player-loader" id="share-player-loader">
-            <div class="share-player-loader-shell">
-              <div class="share-player-spinner" aria-hidden="true"></div>
-              <p class="share-player-loader-title" id="share-player-loader-title">Собираем!</p>
-              <p class="share-player-loader-copy" id="share-player-loader-copy">15 секунд</p>
-            </div>
-          </div>
-          <video
-            class="share-player-video"
-            id="share-player-video"
-            muted
-            autoplay
-            controls
-            playsinline
-            preload="metadata"
-          ></video>
+        <div class="share-player-copy">
+          <h1 class="share-player-title" id="share-player-title">Готовая коробка</h1>
+          <p class="share-player-status" id="share-player-status" hidden></p>
         </div>
 
-        <div class="share-player-actions">
-          <button class="share-player-button" id="share-player-share" type="button" disabled>
-            Поделиться
-          </button>
-          <a class="share-player-link" id="share-player-download" href="/" aria-disabled="true">
-            Скачать
-          </a>
+        <div class="share-player-body">
+          <div class="share-player-frame">
+            <div class="share-player-loader" id="share-player-loader">
+              <div class="share-player-loader-shell">
+                <div class="share-player-spinner" aria-hidden="true"></div>
+                <p class="share-player-loader-title" id="share-player-loader-title">Собираем!</p>
+                <p class="share-player-loader-copy" id="share-player-loader-copy">15 секунд</p>
+              </div>
+            </div>
+            <video
+              class="share-player-video"
+              id="share-player-video"
+              muted
+              autoplay
+              controls
+              playsinline
+              preload="metadata"
+            ></video>
+          </div>
+
+          <aside class="share-player-sidebar">
+            <div class="share-player-actions">
+              <button class="share-player-button" id="share-player-share" type="button" disabled>
+                Поделиться
+              </button>
+              <a class="share-player-link" id="share-player-download" href="/" aria-disabled="true">
+                Скачать
+              </a>
+            </div>
+          </aside>
         </div>
       </section>
     </main>
