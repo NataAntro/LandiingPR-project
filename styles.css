@@ -1082,6 +1082,10 @@ input {
   text-align: center;
 }
 
+.final__note {
+  opacity: 0.78;
+}
+
 /* Figma: max-width 468.75px */
 .final__image-wrap {
   width: 375px;
