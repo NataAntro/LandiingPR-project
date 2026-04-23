@@ -21,7 +21,9 @@ const FAST_SCROLL_COOLDOWN_MS = 1200;
 const FAST_SCROLL_IGNORE_PROGRAMMATIC_MS = 1400;
 const FAST_SCROLL_MIN_DISTANCE_PX = 80;
 const FAST_SCROLL_DESKTOP_THRESHOLD_PX_PER_SEC = 2600;
-const FAST_SCROLL_MOBILE_THRESHOLD_PX_PER_SEC = 2200;
+const FAST_SCROLL_MOBILE_THRESHOLD_PX_PER_SEC = 1600;
+const FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC = 1100;
+const FAST_SCROLL_TOUCH_MIN_DISTANCE_PX = 72;
 const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
 const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
 const boxLabelBreakOverrides = {
@@ -75,6 +77,10 @@ let lastScrollY = window.scrollY;
 let lastScrollTs = performance.now();
 let fastScrollWarningNode = null;
 let fastScrollWarningHideTimer = 0;
+let lastTouchY = 0;
+let lastTouchX = 0;
+let lastTouchTs = 0;
+let touchFastScrollHandled = false;
 const previewTextMeasureCanvas = document.createElement("canvas");
 const previewTextMeasureContext = previewTextMeasureCanvas.getContext("2d");
 
@@ -167,6 +173,14 @@ const showFastScrollWarning = () => {
 
   if (!node) return;
 
+  const image = node.querySelector(".fast-scroll-warning__image");
+
+  if (image) {
+    image.classList.remove("is-animating");
+    void image.offsetWidth;
+    image.classList.add("is-animating");
+  }
+
   node.classList.add("is-visible");
   window.clearTimeout(fastScrollWarningHideTimer);
   fastScrollWarningHideTimer = window.setTimeout(() => {
@@ -197,6 +211,18 @@ const emitFastScrollEvent = (detail) => {
   document.dispatchEvent(new CustomEvent(FAST_SCROLL_EVENT_NAME, { detail }));
 };
 
+const triggerFastScroll = (detail) => {
+  const now = performance.now();
+
+  if (now < ignoreFastScrollUntil || now < fastScrollCooldownUntil) {
+    return false;
+  }
+
+  fastScrollCooldownUntil = now + FAST_SCROLL_COOLDOWN_MS;
+  emitFastScrollEvent(detail);
+  return true;
+};
+
 const handleFastScrollDetection = () => {
   const now = performance.now();
   const currentY = window.scrollY;
@@ -214,20 +240,80 @@ const handleFastScrollDetection = () => {
   const threshold = getFastScrollThreshold();
   const speedPxPerSec = (deltaY / deltaT) * 1000;
 
-  if (speedPxPerSec < threshold || now < fastScrollCooldownUntil) {
+  if (speedPxPerSec < threshold) {
     return;
   }
 
-  fastScrollCooldownUntil = now + FAST_SCROLL_COOLDOWN_MS;
-
-  emitFastScrollEvent({
+  triggerFastScroll({
     speedPxPerSec: Math.round(speedPxPerSec),
     scrollY: Math.round(currentY),
     deltaY: Math.round(deltaY),
     direction: currentY >= previousY ? "down" : "up",
     viewport: mobileBreakpoint.matches ? "mobile" : "desktop",
     thresholdPxPerSec: threshold,
+    input: "scroll",
   });
+};
+
+const handleTouchStart = (event) => {
+  const touch = event.touches[0];
+
+  if (!touch) return;
+
+  lastTouchX = touch.clientX;
+  lastTouchY = touch.clientY;
+  lastTouchTs = performance.now();
+  touchFastScrollHandled = false;
+};
+
+const handleTouchMove = (event) => {
+  if (!mobileBreakpoint.matches || touchFastScrollHandled) {
+    return;
+  }
+
+  const touch = event.touches[0];
+
+  if (!touch) return;
+
+  const now = performance.now();
+  const deltaT = now - lastTouchTs;
+  const deltaY = lastTouchY - touch.clientY;
+  const deltaX = Math.abs(touch.clientX - lastTouchX);
+  const absDeltaY = Math.abs(deltaY);
+
+  if (deltaT <= 0) {
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+    lastTouchTs = now;
+    return;
+  }
+
+  const speedPxPerSec = (absDeltaY / deltaT) * 1000;
+  const isMostlyVertical = absDeltaY > deltaX * 1.2;
+
+  if (
+    isMostlyVertical &&
+    absDeltaY >= FAST_SCROLL_TOUCH_MIN_DISTANCE_PX &&
+    speedPxPerSec >= FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC
+  ) {
+    touchFastScrollHandled = triggerFastScroll({
+      speedPxPerSec: Math.round(speedPxPerSec),
+      scrollY: Math.round(window.scrollY),
+      deltaY: Math.round(absDeltaY),
+      direction: deltaY >= 0 ? "down" : "up",
+      viewport: "mobile",
+      thresholdPxPerSec: FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC,
+      input: "touch",
+    });
+  }
+
+  lastTouchX = touch.clientX;
+  lastTouchY = touch.clientY;
+  lastTouchTs = now;
+};
+
+const handleTouchEnd = () => {
+  touchFastScrollHandled = false;
 };
 
 const applyResponsiveCopy = () => {
@@ -1103,6 +1189,10 @@ fitOpenMarkerPopups();
 createFastScrollWarningNode();
 
 window.addEventListener("scroll", handleFastScrollDetection, { passive: true });
+window.addEventListener("touchstart", handleTouchStart, { passive: true });
+window.addEventListener("touchmove", handleTouchMove, { passive: true });
+window.addEventListener("touchend", handleTouchEnd, { passive: true });
+window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
 window.addEventListener("resize", fitOpenMarkerPopups, { passive: true });
 document.addEventListener(FAST_SCROLL_EVENT_NAME, showFastScrollWarning);
 

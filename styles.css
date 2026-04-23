@@ -92,10 +92,12 @@ input {
   width: min(560px, calc(100vw - 32px));
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(0.82) rotate(-5deg);
+  transform: translate(-50%, -50%) scale(0.94) rotate(-5deg);
   transform-origin: center;
-  transition: opacity 180ms ease, transform 280ms cubic-bezier(0.2, 0.9, 0.2, 1);
-  filter: drop-shadow(0 18px 38px rgba(36, 56, 136, 0.22));
+  transition:
+    opacity 280ms ease-out,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
 }
 
 .fast-scroll-warning.is-visible {
@@ -107,6 +109,42 @@ input {
   display: block;
   width: 100%;
   height: auto;
+  filter: drop-shadow(0 18px 38px rgba(36, 56, 136, 0.22));
+  transform-origin: center;
+}
+
+.fast-scroll-warning__image.is-animating {
+  animation: fast-scroll-warning-pop 520ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+@keyframes fast-scroll-warning-pop {
+  0% {
+    transform: scale(0.7) rotate(-9deg);
+  }
+
+  28% {
+    transform: scale(1.08) rotate(4deg);
+  }
+
+  44% {
+    transform: scale(0.98) rotate(-3deg);
+  }
+
+  58% {
+    transform: scale(1.02) rotate(2deg);
+  }
+
+  72% {
+    transform: scale(1) rotate(-1.6deg);
+  }
+
+  86% {
+    transform: scale(1) rotate(1deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 /* ─── Typography ─────────────────────────────────────────── */
@@ -1562,12 +1600,16 @@ input {
 
 @media (prefers-reduced-motion: reduce) {
   .fast-scroll-warning {
-    transition: opacity 120ms linear;
+    transition: opacity 180ms linear;
     transform: translate(-50%, -50%);
   }
 
   .fast-scroll-warning.is-visible {
     transform: translate(-50%, -50%);
+  }
+
+  .fast-scroll-warning__image.is-animating {
+    animation: none;
   }
 
   .marker::before,
