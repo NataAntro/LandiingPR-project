@@ -1064,20 +1064,6 @@ const downloadBlob = (blob, fileName) => {
   }, 1000);
 };
 
-const downloadFileUrl = (fileUrl, fileName) => {
-  const link = document.createElement("a");
-
-  link.href = fileUrl;
-  if (fileName) {
-    link.download = fileName;
-  }
-
-  link.rel = "noreferrer";
-  document.body.append(link);
-  link.click();
-  link.remove();
-};
-
 const getHotboxLabelValue = () => input?.value.trim() || boxLabelOptions[0];
 
 const buildHotboxRendererUrl = (pathname) => {
@@ -1161,22 +1147,41 @@ const exportBoxVideoFromServer = async () => {
   };
 };
 
-const tryNativeFileShare = async (file) => {
+const tryNativeShare = async (exportPayload) => {
   if (!mobileBreakpoint.matches || typeof navigator.share !== "function") {
     return false;
   }
 
-  if (typeof navigator.canShare === "function" && !navigator.canShare({ files: [file] })) {
-    return false;
+  const shareTitle = "Подписанная коробка";
+  const shareText = input?.value.trim() || shareTitle;
+  const { file, downloadUrl } = exportPayload ?? {};
+
+  if (file) {
+    const fileSharePayload = {
+      files: [file],
+      title: shareTitle,
+      text: shareText,
+    };
+
+    if (
+      typeof navigator.canShare !== "function" ||
+      navigator.canShare(fileSharePayload)
+    ) {
+      await navigator.share(fileSharePayload);
+      return true;
+    }
   }
 
-  await navigator.share({
-    files: [file],
-    title: "Подписанная коробка",
-    text: input?.value.trim() || "Подписанная коробка",
-  });
+  if (downloadUrl) {
+    await navigator.share({
+      title: shareTitle,
+      text: shareText,
+      url: downloadUrl,
+    });
+    return true;
+  }
 
-  return true;
+  return false;
 };
 
 const handleShareButtonClick = async () => {
@@ -1209,7 +1214,7 @@ const handleShareButtonClick = async () => {
     }
 
     try {
-      const didShare = await tryNativeFileShare(exportPayload.file);
+      const didShare = await tryNativeShare(exportPayload);
 
       if (didShare) {
         setShareStatus("");
@@ -1224,11 +1229,7 @@ const handleShareButtonClick = async () => {
       console.error(error);
     }
 
-    if (exportPayload.downloadUrl) {
-      downloadFileUrl(exportPayload.downloadUrl, exportPayload.fileName);
-    } else {
-      downloadBlob(exportPayload.blob, exportPayload.fileName);
-    }
+    downloadBlob(exportPayload.blob, exportPayload.fileName);
     setShareStatus("");
   } catch (error) {
     console.error(error);
