@@ -28,6 +28,7 @@ const FAST_SCROLL_TOUCH_MIN_DISTANCE_PX = 72;
 const RETURN_SCROLL_STORAGE_KEY = "hotbox:return-scroll-target";
 const CTA_RETURN_SCROLL_SELECTOR = "#cta-title";
 const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
+const SHARE_PLAYER_STARTED_AT_PARAM = "startedAt";
 const defaultBoxLabelValue = "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)";
 const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
 const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
@@ -1240,8 +1241,10 @@ const buildSharePlayerPageUrl = (exportPayload) => {
 const buildPendingSharePlayerPageUrl = () => {
   const sharePageUrl = new URL("/share-player.html", `${window.location.origin}/`);
   const label = getHotboxLabelValue();
+  const startedAt = Date.now();
 
   sharePageUrl.searchParams.set("pending", "1");
+  sharePageUrl.searchParams.set(SHARE_PLAYER_STARTED_AT_PARAM, String(startedAt));
 
   if (label) {
     sharePageUrl.searchParams.set("label", label);
