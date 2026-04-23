@@ -29,6 +29,12 @@ const defaultBoxLabelValue = "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТ�
 const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
 const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
 const HOTBOX_RENDERER_BASE_URL = hotboxRendererMeta?.content.trim().replace(/\/$/, "") ?? "";
+const HOTBOX_RENDERER_RESOLVED_BASE_URL = HOTBOX_RENDERER_BASE_URL
+  ? new URL(
+      `${HOTBOX_RENDERER_BASE_URL.replace(/^\.\//, "").replace(/^\//, "")}/`,
+      `${window.location.origin}/`
+    ).toString()
+  : "";
 const boxLabelBreakOverrides = {
   "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)": {
     primary: "КОНТЕНТ\n2020–2024",
@@ -1072,11 +1078,11 @@ const downloadBlob = (blob, fileName) => {
 const getHotboxLabelValue = () => input?.value.trim() || boxLabelOptions[0];
 
 const buildHotboxRendererUrl = (pathname) => {
-  if (!HOTBOX_RENDERER_BASE_URL) {
+  if (!HOTBOX_RENDERER_RESOLVED_BASE_URL) {
     throw new Error("Hotbox renderer base URL is not configured.");
   }
 
-  return new URL(pathname, `${HOTBOX_RENDERER_BASE_URL}/`).toString();
+  return new URL(pathname, HOTBOX_RENDERER_RESOLVED_BASE_URL).toString();
 };
 
 const resolveHotboxRendererAssetUrl = (assetUrl) => {
@@ -1084,7 +1090,11 @@ const resolveHotboxRendererAssetUrl = (assetUrl) => {
     return "";
   }
 
-  return new URL(assetUrl, `${HOTBOX_RENDERER_BASE_URL}/`).toString();
+  if (!HOTBOX_RENDERER_RESOLVED_BASE_URL) {
+    throw new Error("Hotbox renderer base URL is not configured.");
+  }
+
+  return new URL(assetUrl, HOTBOX_RENDERER_RESOLVED_BASE_URL).toString();
 };
 
 const fetchBlobAsFile = async (fileUrl, fileName) => {
@@ -1113,7 +1123,7 @@ const fetchBlobAsFile = async (fileUrl, fileName) => {
 };
 
 const exportBoxVideoFromServer = async () => {
-  if (!HOTBOX_RENDERER_BASE_URL) {
+  if (!HOTBOX_RENDERER_RESOLVED_BASE_URL) {
     throw new Error("Hotbox renderer is unavailable.");
   }
 
