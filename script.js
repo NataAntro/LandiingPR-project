@@ -8,6 +8,7 @@ const ctaShareStatus = document.querySelector("#cta-share-status");
 const ctaVisual = document.querySelector(".cta__visual");
 const ctaVisualImage = document.querySelector(".cta__visual-image");
 const ctaLabelNote = document.querySelector(".cta__label-note");
+const hotboxRendererMeta = document.querySelector('meta[name="hotbox-renderer-url"]');
 const featuresSection = document.querySelector("#features");
 const firstFeatureCard = document.querySelector("#feature-card-1");
 const markers = Array.from(document.querySelectorAll("[data-marker]"));
@@ -24,8 +25,10 @@ const FAST_SCROLL_DESKTOP_THRESHOLD_PX_PER_SEC = 2600;
 const FAST_SCROLL_MOBILE_THRESHOLD_PX_PER_SEC = 1600;
 const FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC = 1100;
 const FAST_SCROLL_TOUCH_MIN_DISTANCE_PX = 72;
+const defaultBoxLabelValue = "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)";
 const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
 const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
+const HOTBOX_RENDERER_BASE_URL = hotboxRendererMeta?.content.trim().replace(/\/$/, "") ?? "";
 const boxLabelBreakOverrides = {
   "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)": {
     primary: "КОНТЕНТ\n2020–2024",
@@ -332,7 +335,7 @@ const applyResponsiveCopy = () => {
     const mobileValue = input.dataset.mobileValue ?? "";
     const desktopPlaceholder = input.dataset.desktopPlaceholder ?? "";
     const mobilePlaceholder = input.dataset.mobilePlaceholder ?? "";
-    const nextValue = isMobile ? mobileValue : desktopValue;
+    const nextValue = (isMobile ? mobileValue : desktopValue) || defaultBoxLabelValue;
     const nextPlaceholder = isMobile ? mobilePlaceholder : desktopPlaceholder;
 
     input.placeholder = nextPlaceholder;
@@ -711,12 +714,12 @@ const drawVideoOverlayLabel = (ctx, video, canvasWidth, canvasHeight) => {
   const secondaryStyles = window.getComputedStyle(previewSecondary);
   const [primaryText, secondaryText] = splitBoxLabelForPreview(input?.value ?? "");
   const boxRect = getVideoBoxRect(canvasWidth, canvasHeight);
-  const contentWidth = boxRect.width * 1.12;
-  const horizontalPadding = contentWidth * 0.04;
+  const contentWidth = boxRect.width;
+  const horizontalPadding = contentWidth * 0.02;
   const verticalPadding = boxRect.height * 0.12;
   const textWidth = contentWidth - horizontalPadding * 2;
-  const primaryFontSize = boxRect.height * 0.125;
-  const secondaryFontSize = boxRect.height * 0.09;
+  const primaryFontSize = boxRect.height * 0.112;
+  const secondaryFontSize = boxRect.height * 0.081;
   const primaryLineHeight = primaryFontSize * 1.08;
   const secondaryLineHeight = secondaryFontSize * 1.12;
   const gap = secondaryText ? boxRect.height * 0.02 : 0;
@@ -1032,6 +1035,20 @@ const exportBoxImageBlob = async () => {
   });
 };
 
+const exportBoxImageFile = async () => {
+  const blob = await exportBoxImageBlob();
+  const fileName = getImageExportFileName();
+
+  return {
+    blob,
+    fileName,
+    file:
+      typeof File === "function"
+        ? new File([blob], fileName, { type: "image/jpeg", lastModified: Date.now() })
+        : blob,
+  };
+};
+
 const downloadBlob = (blob, fileName) => {
   const blobUrl = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -1045,6 +1062,103 @@ const downloadBlob = (blob, fileName) => {
   window.setTimeout(() => {
     URL.revokeObjectURL(blobUrl);
   }, 1000);
+};
+
+const downloadFileUrl = (fileUrl, fileName) => {
+  const link = document.createElement("a");
+
+  link.href = fileUrl;
+  if (fileName) {
+    link.download = fileName;
+  }
+
+  link.rel = "noreferrer";
+  document.body.append(link);
+  link.click();
+  link.remove();
+};
+
+const getHotboxLabelValue = () => input?.value.trim() || boxLabelOptions[0];
+
+const buildHotboxRendererUrl = (pathname) => {
+  if (!HOTBOX_RENDERER_BASE_URL) {
+    throw new Error("Hotbox renderer base URL is not configured.");
+  }
+
+  return new URL(pathname, `${HOTBOX_RENDERER_BASE_URL}/`).toString();
+};
+
+const resolveHotboxRendererAssetUrl = (assetUrl) => {
+  if (!assetUrl) {
+    return "";
+  }
+
+  return new URL(assetUrl, `${HOTBOX_RENDERER_BASE_URL}/`).toString();
+};
+
+const fetchBlobAsFile = async (fileUrl, fileName) => {
+  const response = await fetch(fileUrl, {
+    mode: "cors",
+    credentials: "omit",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch render: ${response.status}`);
+  }
+
+  const blob = await response.blob();
+
+  return {
+    blob,
+    file:
+      typeof File === "function"
+        ? new File([blob], fileName, {
+            type: blob.type || "video/mp4",
+            lastModified: Date.now(),
+          })
+        : blob,
+  };
+};
+
+const exportBoxVideoFromServer = async () => {
+  if (!HOTBOX_RENDERER_BASE_URL) {
+    throw new Error("Hotbox renderer is unavailable.");
+  }
+
+  const response = await fetch(buildHotboxRendererUrl("/render"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      label: getHotboxLabelValue(),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Renderer request failed: ${response.status}`);
+  }
+
+  const payload = await response.json();
+
+  if (!payload?.downloadUrl || !payload?.fileName) {
+    throw new Error("Renderer response is incomplete.");
+  }
+
+  const downloadUrl = resolveHotboxRendererAssetUrl(payload.downloadUrl);
+  const streamUrl = payload.streamUrl
+    ? resolveHotboxRendererAssetUrl(payload.streamUrl)
+    : downloadUrl;
+  const { blob, file } = await fetchBlobAsFile(downloadUrl, payload.fileName);
+
+  return {
+    blob,
+    file,
+    fileName: payload.fileName,
+    downloadUrl,
+    streamUrl,
+  };
 };
 
 const tryNativeFileShare = async (file) => {
@@ -1076,21 +1190,22 @@ const handleShareButtonClick = async () => {
 
     try {
       setShareStatus("...это займет около 15 секунд.");
-      exportPayload = await exportBoxVideoFile();
+      exportPayload = await exportBoxVideoFromServer();
     } catch (error) {
       console.error(error);
-      setShareStatus("Видео не получилось, сохраняем картинку.");
-      const blob = await exportBoxImageBlob();
-      const fileName = getImageExportFileName();
-
-      exportPayload = {
-        blob,
-        fileName,
-        file:
-          typeof File === "function"
-            ? new File([blob], fileName, { type: "image/jpeg", lastModified: Date.now() })
-            : blob,
-      };
+      if (mobileBreakpoint.matches) {
+        setShareStatus("Видео не получилось, сохраняем картинку.");
+        exportPayload = await exportBoxImageFile();
+      } else {
+        try {
+          setShareStatus("Картон не по ГОСТу, пробуем ещё раз.");
+          exportPayload = await exportBoxVideoFile();
+        } catch (clientVideoError) {
+          console.error(clientVideoError);
+          setShareStatus("Видео не получилось, сохраняем картинку.");
+          exportPayload = await exportBoxImageFile();
+        }
+      }
     }
 
     try {
@@ -1109,7 +1224,11 @@ const handleShareButtonClick = async () => {
       console.error(error);
     }
 
-    downloadBlob(exportPayload.blob, exportPayload.fileName);
+    if (exportPayload.downloadUrl) {
+      downloadFileUrl(exportPayload.downloadUrl, exportPayload.fileName);
+    } else {
+      downloadBlob(exportPayload.blob, exportPayload.fileName);
+    }
     setShareStatus("");
   } catch (error) {
     console.error(error);
