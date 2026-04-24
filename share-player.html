@@ -37,6 +37,9 @@
         --button-bg: #4f5b97;
         --button-fg: #f5f7ff;
         --button-secondary-bg: rgba(255, 255, 255, 0.62);
+        --desktop-content-width: 940px;
+        --desktop-sidebar-width: 500px;
+        --desktop-grid-gap: 40px;
       }
 
       * {
@@ -153,8 +156,13 @@
         overflow: hidden;
         aspect-ratio: 9 / 16;
         border-radius: 22px;
-        background: rgba(255, 255, 255, 0.66);
-        border: 1px solid rgba(36, 56, 136, 0.08);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(221, 228, 249, 0.94)),
+          rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(36, 56, 136, 0.12);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.72),
+          0 18px 44px rgba(36, 56, 136, 0.11);
       }
 
       .share-player-body {
@@ -251,12 +259,13 @@
         word-break: break-word;
       }
 
-      .share-player-loader-copy {
-        margin: 0;
-        color: var(--ink-muted);
-        font-size: 14px;
-        line-height: 1.35;
-      }
+        .share-player-loader-copy {
+          margin: 0;
+          color: var(--ink-muted);
+          font-size: 14px;
+          line-height: 1.35;
+          white-space: pre-line;
+        }
 
       @keyframes share-player-spin {
         to {
@@ -272,7 +281,7 @@
       .share-player-button,
       .share-player-link {
         appearance: none;
-        border: 0;
+        border: 1px solid transparent;
         border-radius: 999px;
         min-height: 56px;
         padding: 0 22px;
@@ -282,18 +291,44 @@
         text-decoration: none;
         font: 700 16px/1 "Inter", sans-serif;
         cursor: pointer;
+        transition:
+          transform 160ms ease,
+          box-shadow 160ms ease,
+          border-color 160ms ease,
+          background 160ms ease;
       }
 
       .share-player-button {
         flex: 1 1 auto;
         color: var(--button-fg);
-        background: var(--button-bg);
+        background: linear-gradient(180deg, #6470ab 0%, #58649f 100%);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.16),
+          0 14px 28px rgba(79, 91, 151, 0.18);
       }
 
       .share-player-link {
         flex: 0 0 auto;
         color: var(--ink);
-        background: var(--button-secondary-bg);
+        background: rgba(255, 255, 255, 0.42);
+        border-color: rgba(36, 56, 136, 0.1);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+      }
+
+      .share-player-button:hover,
+      .share-player-link:hover {
+        transform: translateY(-1px);
+      }
+
+      .share-player-button:hover {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.2),
+          0 18px 32px rgba(79, 91, 151, 0.22);
+      }
+
+      .share-player-link:hover {
+        background: rgba(255, 255, 255, 0.58);
+        border-color: rgba(36, 56, 136, 0.15);
       }
 
       @media (max-width: 767px) {
@@ -347,18 +382,18 @@
 
         .share-player-page {
           justify-content: center;
-          gap: clamp(14px, 1.6vw, 20px);
-          padding: clamp(18px, 2vw, 28px);
+          gap: clamp(16px, 1.8vw, 22px);
+          padding: clamp(20px, 2.2vw, 30px);
         }
 
         .share-player-topbar,
         .share-player-card {
-          width: min(100%, 1080px);
+          width: min(100%, 1120px);
         }
 
         .share-player-card {
-          padding: clamp(22px, 2.4vw, 32px);
-          border-radius: 32px;
+          padding: clamp(24px, 2.8vw, 36px);
+          border-radius: 34px;
           background:
             radial-gradient(circle at top right, rgba(103, 120, 182, 0.24), transparent 34%),
             linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(244, 247, 255, 0.86));
@@ -378,81 +413,83 @@
         }
 
         .share-player-copy {
-          margin-bottom: clamp(14px, 1.8vw, 22px);
+          width: min(100%, var(--desktop-content-width));
+          margin-inline: auto;
+          margin-bottom: clamp(16px, 1.9vw, 24px);
         }
 
         .share-player-title {
-          margin-bottom: 12px;
-          max-width: 11ch;
-          font-size: clamp(38px, 4.4vw, 56px);
+          margin-bottom: 10px;
+          max-width: 9ch;
+          font-size: clamp(34px, 4vw, 50px);
           text-align: left;
         }
 
         .share-player-status {
           margin-bottom: 0;
-          max-width: 44ch;
-          font-size: 16px;
-          line-height: 1.5;
+          max-width: 40ch;
+          font-size: 15px;
+          line-height: 1.45;
           text-align: left;
         }
 
         .share-player-body {
           display: flex;
           flex-direction: column;
-          gap: 18px;
+          width: min(100%, var(--desktop-content-width));
+          margin: 0 auto;
+          gap: 20px;
         }
 
         .share-player-frame {
           width: min(100%, calc(var(--share-player-frame-max-height) * 9 / 16));
           max-width: calc(var(--share-player-frame-max-height) * 9 / 16);
           margin: 0 auto;
-          border-radius: 24px;
-          background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(222, 228, 248, 0.92)),
-            rgba(255, 255, 255, 0.68);
-          box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.78),
-            0 14px 36px rgba(36, 56, 136, 0.08);
+          border-radius: 28px;
         }
 
         .share-player-sidebar {
           min-height: 0;
-          padding: 22px;
-          border-radius: 26px;
+          padding: 20px 22px;
+          border-radius: 28px;
           background:
-            linear-gradient(180deg, rgba(245, 247, 255, 0.9), rgba(229, 235, 252, 0.88));
-          border: 1px solid rgba(36, 56, 136, 0.09);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            linear-gradient(180deg, rgba(247, 249, 255, 0.9), rgba(232, 237, 252, 0.9));
+          border: 1px solid rgba(36, 56, 136, 0.1);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.78),
+            0 12px 28px rgba(36, 56, 136, 0.05);
           justify-content: flex-start;
-          gap: 18px;
+          gap: 16px;
         }
 
         .share-player-panel {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          flex: 1 1 auto;
+          justify-content: center;
+          gap: 12px;
         }
 
         .share-player-panel-kicker {
           color: rgba(36, 56, 136, 0.6);
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 700;
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
 
         .share-player-panel-title {
-          max-width: 12ch;
+          max-width: 10ch;
           font-family: "Unbounded", sans-serif;
-          font-size: clamp(24px, 2.4vw, 34px);
-          line-height: 1;
+          font-size: clamp(28px, 2.6vw, 38px);
+          line-height: 0.96;
           letter-spacing: -0.04em;
         }
 
         .share-player-panel-copy {
-          max-width: 34ch;
+          max-width: 29ch;
           color: rgba(36, 56, 136, 0.7);
-          font-size: 16px;
+          font-size: 18px;
           line-height: 1.5;
         }
 
@@ -495,8 +532,8 @@
         .share-player-actions {
           flex-direction: row;
           flex-wrap: wrap;
-          gap: 12px;
-          margin-top: 4px;
+          gap: 14px;
+          margin-top: auto;
         }
 
         .share-player-button,
@@ -509,16 +546,29 @@
 
       @media (min-width: 1024px) {
         .share-player-page {
-          --share-player-frame-max-height: min(52dvh, calc(100dvh - 240px), 560px);
+          --share-player-frame-max-height: min(54dvh, calc(100dvh - 220px), 590px);
+        }
+
+        .share-player-copy,
+        .share-player-body {
+          width: min(
+            100%,
+            calc(
+              (var(--share-player-frame-max-height) * 9 / 16) +
+              var(--desktop-sidebar-width) +
+              var(--desktop-grid-gap)
+            )
+          );
         }
 
         .share-player-body {
           display: grid;
           grid-template-columns:
-            minmax(240px, min(30vw, 320px))
-            minmax(320px, 1fr);
+            calc(var(--share-player-frame-max-height) * 9 / 16)
+            var(--desktop-sidebar-width);
+          justify-content: center;
           align-items: start;
-          gap: clamp(20px, 2.2vw, 30px);
+          gap: var(--desktop-grid-gap);
         }
 
         .share-player-frame {
@@ -526,14 +576,18 @@
         }
 
         .share-player-sidebar {
-          min-height: auto;
-          padding: 24px;
+          min-height: var(--share-player-frame-max-height);
+          padding: 28px 30px;
           align-self: start;
+        }
+
+        .share-player-panel {
+          padding-block: 8px 14px;
         }
 
         .share-player-actions {
           flex-direction: column;
-          gap: 12px;
+          gap: 14px;
         }
 
         .share-player-button,

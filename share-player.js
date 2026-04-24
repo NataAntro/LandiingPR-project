@@ -204,8 +204,9 @@ const applyImageReadyPresentation = () => {
 
 const applyUnavailablePresentation = () => {
   clearPendingTimers();
+  disableDownloadLink();
 
-  setLoaderCopy("Коробка потерялась", "Вернитесь и попробуйте ещё раз");
+  setLoaderCopy("Коробка потерялась", "Вернитесь и попробуйте\nещё раз");
 
   if (isMobileViewport.matches) {
     return;
@@ -228,14 +229,23 @@ const applyRenderErrorPresentation = () => {
   });
 };
 
+const disableDownloadLink = () => {
+  if (!downloadLink) {
+    return;
+  }
+
+  downloadLink.setAttribute("aria-disabled", "true");
+  downloadLink.removeAttribute("href");
+  downloadLink.removeAttribute("download");
+};
+
 const setDownloadState = () => {
   if (!downloadLink) {
     return;
   }
 
   if (isMobileViewport.matches || !downloadUrl) {
-    downloadLink.setAttribute("aria-disabled", "true");
-    downloadLink.removeAttribute("href");
+    disableDownloadLink();
     return;
   }
 
