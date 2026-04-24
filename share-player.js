@@ -22,7 +22,7 @@ const SHARE_PLAYER_STARTED_AT_PARAM = "startedAt";
 const PENDING_LONG_DELAY_MS = 30_000;
 const CLIENT_FALLBACK_DELAY_MS = 60_000;
 const PLAYBACK_LOADING_MIN_VISIBLE_MS = 320;
-const DISABLE_BACKEND_RENDER_REQUEST = true;
+const DISABLE_BACKEND_RENDER_REQUEST = false;
 
 let streamUrl = params.get("stream") || "";
 let downloadUrl = params.get("download") || streamUrl;
