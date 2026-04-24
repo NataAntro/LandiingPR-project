@@ -483,7 +483,6 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
 
   applyPlaybackLoadingPresentation();
   if (!skipPendingTimers) {
-    schedulePendingLongWaitPresentation();
     scheduleClientFallbackRender();
   }
   setLoaderVisible(true);
@@ -723,13 +722,6 @@ const shareCurrentVideo = async () => {
           return;
         }
       }
-
-      await navigator.share({
-        title: label,
-        text: label,
-        url: downloadUrl || streamUrl,
-      });
-      return;
     } catch (error) {
       if (error?.name === "AbortError") {
         return;
