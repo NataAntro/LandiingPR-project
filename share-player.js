@@ -21,6 +21,7 @@ const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
 const SHARE_PLAYER_STARTED_AT_PARAM = "startedAt";
 const PENDING_LONG_DELAY_MS = 30_000;
 const CLIENT_FALLBACK_DELAY_MS = 60_000;
+const PLAYBACK_LOADING_MIN_VISIBLE_MS = 320;
 
 let streamUrl = params.get("stream") || "";
 let downloadUrl = params.get("download") || streamUrl;
@@ -36,10 +37,13 @@ let shareFileGeneration = 0;
 let pendingRenderAbortController = null;
 let pendingLongWaitTimeoutId = null;
 let clientFallbackTimeoutId = null;
+let playbackLoadingFinalizeTimeoutId = null;
 let isClientFallbackRunning = false;
 let localVideoObjectUrl = "";
 let isVideoReady = false;
 let currentMediaKind = streamUrl ? "video" : "";
+let isPlaybackLoadingActive = false;
+let playbackLoadingStartedAt = 0;
 
 const setStatus = (message) => {
   if (!statusNode) return;
@@ -123,6 +127,15 @@ const clearClientFallbackTimer = () => {
 const clearPendingTimers = () => {
   clearPendingLongWaitTimer();
   clearClientFallbackTimer();
+};
+
+const clearPlaybackLoadingFinalizeTimer = () => {
+  if (!playbackLoadingFinalizeTimeoutId) {
+    return;
+  }
+
+  window.clearTimeout(playbackLoadingFinalizeTimeoutId);
+  playbackLoadingFinalizeTimeoutId = null;
 };
 
 const revokeLocalVideoObjectUrl = () => {
@@ -329,6 +342,21 @@ const getShareFlowStartedAt = () => {
 const getRemainingDelay = (targetDelayMs) =>
   Math.max(0, targetDelayMs - (Date.now() - getShareFlowStartedAt()));
 
+const hasLongWaitElapsed = () => getRemainingDelay(PENDING_LONG_DELAY_MS) === 0;
+
+const applyWaitingPresentationForCurrentProgress = () => {
+  if (isPlaybackLoadingActive || isVideoReady || isClientFallbackRunning) {
+    return;
+  }
+
+  if (isTimedShareFlow && hasLongWaitElapsed()) {
+    applyPendingLongWaitPresentation();
+    return;
+  }
+
+  applyPendingPresentation();
+};
+
 const getShareFileFallbackType = () => {
   const normalizedFileName = String(fileName || "").toLowerCase();
 
@@ -366,7 +394,12 @@ const schedulePendingLongWaitPresentation = () => {
   pendingLongWaitTimeoutId = window.setTimeout(() => {
     pendingLongWaitTimeoutId = null;
 
-    if (isTimedShareFlow && !isVideoReady && !isClientFallbackRunning) {
+    if (
+      isTimedShareFlow &&
+      !isVideoReady &&
+      !isClientFallbackRunning &&
+      !isPlaybackLoadingActive
+    ) {
       applyPendingLongWaitPresentation();
     }
   }, getRemainingDelay(PENDING_LONG_DELAY_MS));
@@ -446,8 +479,11 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
 
   isVideoReady = false;
   currentMediaKind = "video";
+  isPlaybackLoadingActive = false;
+  playbackLoadingStartedAt = 0;
+  clearPlaybackLoadingFinalizeTimer();
   let didResolve = false;
-  const finalizeReady = () => {
+  const finishReady = () => {
     if (didResolve) {
       return;
     }
@@ -463,12 +499,39 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
     shareButton.disabled = false;
     videoNode.play().catch(() => {});
   };
+  const enterPlaybackLoading = () => {
+    if (isPlaybackLoadingActive || didResolve) {
+      return;
+    }
+
+    isPlaybackLoadingActive = true;
+    playbackLoadingStartedAt = Date.now();
+    clearPendingLongWaitTimer();
+    applyPlaybackLoadingPresentation();
+    setLoaderVisible(true);
+    setStatus("");
+  };
+  const finalizeReady = () => {
+    enterPlaybackLoading();
+
+    const elapsedMs = playbackLoadingStartedAt > 0
+      ? Date.now() - playbackLoadingStartedAt
+      : PLAYBACK_LOADING_MIN_VISIBLE_MS;
+    const remainingMs = Math.max(0, PLAYBACK_LOADING_MIN_VISIBLE_MS - elapsedMs);
+
+    clearPlaybackLoadingFinalizeTimer();
+    playbackLoadingFinalizeTimeoutId = window.setTimeout(() => {
+      playbackLoadingFinalizeTimeoutId = null;
+      finishReady();
+    }, remainingMs);
+  };
   const finalizeError = () => {
     if (didResolve) {
       return;
     }
 
     didResolve = true;
+    clearPlaybackLoadingFinalizeTimer();
 
     if (isTimedShareFlow && canUseClientFallback() && !isClientFallbackRunning) {
       startClientFallbackRender("Не удалось открыть видео, поэтому готовим картинку.");
@@ -481,8 +544,9 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
     shareButton.disabled = false;
   };
 
-  applyPlaybackLoadingPresentation();
+  applyWaitingPresentationForCurrentProgress();
   if (!skipPendingTimers) {
+    schedulePendingLongWaitPresentation();
     scheduleClientFallbackRender();
   }
   setLoaderVisible(true);
@@ -514,6 +578,9 @@ const loadImageIntoPlayer = () => {
 
   currentMediaKind = "image";
   isVideoReady = false;
+  isPlaybackLoadingActive = false;
+  playbackLoadingStartedAt = 0;
+  clearPlaybackLoadingFinalizeTimer();
   let didResolve = false;
   const finalizeReady = () => {
     if (didResolve) {
@@ -569,6 +636,9 @@ const startClientFallbackRender = async (
 
   isClientFallbackRunning = true;
   clearPendingTimers();
+  clearPlaybackLoadingFinalizeTimer();
+  isPlaybackLoadingActive = false;
+  playbackLoadingStartedAt = 0;
   abortPendingRender();
   videoNode.pause();
   videoNode.removeAttribute("src");
@@ -785,7 +855,7 @@ setDownloadState();
 
 if (!streamUrl) {
   if (isPending) {
-    applyPendingPresentation();
+    applyWaitingPresentationForCurrentProgress();
     schedulePendingLongWaitPresentation();
     scheduleClientFallbackRender();
     requestServerRenderFromPendingPage();
@@ -823,11 +893,13 @@ backButton?.addEventListener("click", () => {
 
 window.addEventListener("pagehide", () => {
   clearPendingTimers();
+  clearPlaybackLoadingFinalizeTimer();
   abortPendingRender();
   revokeLocalVideoObjectUrl();
 });
 window.addEventListener("beforeunload", () => {
   clearPendingTimers();
+  clearPlaybackLoadingFinalizeTimer();
   abortPendingRender();
   revokeLocalVideoObjectUrl();
 });

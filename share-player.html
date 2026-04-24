@@ -171,6 +171,7 @@
       .share-player-video {
         position: absolute;
         inset: 0;
+        z-index: 1;
         display: block;
         width: 100%;
         height: 100%;
@@ -181,6 +182,7 @@
       .share-player-image {
         position: absolute;
         inset: 0;
+        z-index: 1;
         display: block;
         width: 100%;
         height: 100%;
@@ -188,9 +190,15 @@
         background: #ccd4ef;
       }
 
+      .share-player-video[hidden],
+      .share-player-image[hidden] {
+        display: none;
+      }
+
       .share-player-loader {
         position: absolute;
         inset: 0;
+        z-index: 2;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -575,6 +583,7 @@
               controls
               playsinline
               preload="metadata"
+              hidden
             ></video>
             <img
               class="share-player-image"
