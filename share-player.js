@@ -314,8 +314,8 @@ const getPendingRenderContext = () => {
   const pendingRequest = readPendingRenderRequest();
 
   return {
-    label: pendingRequest?.label || label,
-    rendererBaseUrl: pendingRequest?.rendererBaseUrl || pendingRendererBaseUrlParam,
+    label: label || pendingRequest?.label || "Коробка отпущения",
+    rendererBaseUrl: pendingRendererBaseUrlParam || pendingRequest?.rendererBaseUrl || "",
     createdAt: Number(pendingRequest?.createdAt || 0),
   };
 };
@@ -667,8 +667,9 @@ const startClientFallbackRender = async (
   shareButton.disabled = true;
 
   try {
+    const pendingContext = getPendingRenderContext();
     const exportPayload = await window.HotboxVideoRenderer.renderImageFile({
-      label,
+      label: pendingContext.label,
     });
 
     revokeLocalVideoObjectUrl();

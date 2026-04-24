@@ -1446,9 +1446,10 @@ const handleShareButtonClick = async () => {
 
   const pendingSharePlayerUrl = buildPendingSharePlayerPageUrl();
   const shouldOpenInNewTab = shouldOpenSharePlayerPageInNewTab();
-  const playerWindow = shouldOpenInNewTab ? window.open(pendingSharePlayerUrl, "_blank") : null;
 
   writePendingRenderRequest();
+
+  const playerWindow = shouldOpenInNewTab ? window.open(pendingSharePlayerUrl, "_blank") : null;
 
   if (!shouldOpenInNewTab || !playerWindow) {
     window.location.assign(pendingSharePlayerUrl);
