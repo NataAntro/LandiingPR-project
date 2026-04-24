@@ -38,7 +38,7 @@
         --button-fg: #f5f7ff;
         --button-secondary-bg: rgba(255, 255, 255, 0.62);
         --desktop-content-width: 940px;
-        --desktop-sidebar-width: 500px;
+        --desktop-sidebar-width: 300px;
         --desktop-grid-gap: 40px;
       }
 
@@ -472,24 +472,24 @@
 
         .share-player-panel-kicker {
           color: rgba(36, 56, 136, 0.6);
-          font-size: 15px;
+          font-size: 12px;
           font-weight: 700;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.09em;
           text-transform: uppercase;
         }
 
         .share-player-panel-title {
-          max-width: 10ch;
+          max-width: 13ch;
           font-family: "Unbounded", sans-serif;
-          font-size: clamp(28px, 2.6vw, 38px);
+          font-size: clamp(20px, 1.8vw, 26px);
           line-height: 0.96;
           letter-spacing: -0.04em;
         }
 
         .share-player-panel-copy {
-          max-width: 29ch;
+          max-width: 32ch;
           color: rgba(36, 56, 136, 0.7);
-          font-size: 18px;
+          font-size: 15px;
           line-height: 1.5;
         }
 
@@ -546,10 +546,9 @@
 
       @media (min-width: 1024px) {
         .share-player-page {
-          --share-player-frame-max-height: min(54dvh, calc(100dvh - 220px), 590px);
+          --share-player-frame-max-height: min(calc(100dvh - 340px), 660px);
         }
 
-        .share-player-copy,
         .share-player-body {
           width: min(
             100%,
@@ -559,9 +558,6 @@
               var(--desktop-grid-gap)
             )
           );
-        }
-
-        .share-player-body {
           display: grid;
           grid-template-columns:
             calc(var(--share-player-frame-max-height) * 9 / 16)
@@ -571,29 +567,111 @@
           gap: var(--desktop-grid-gap);
         }
 
-        .share-player-frame {
-          margin: 0;
-        }
-
-        .share-player-sidebar {
-          min-height: var(--share-player-frame-max-height);
-          padding: 28px 30px;
-          align-self: start;
-        }
-
-        .share-player-panel {
-          padding-block: 8px 14px;
-        }
-
-        .share-player-actions {
+        .share-player-left {
+          display: flex;
           flex-direction: column;
           gap: 14px;
         }
 
-        .share-player-button,
-        .share-player-link {
+        .share-player-copy {
+          width: 100%;
+          margin: 0;
+        }
+
+        .share-player-title {
+          font-size: clamp(26px, 2.8vw, 38px);
+          margin-bottom: 0;
+        }
+
+        .share-player-frame {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+        }
+
+        /* Right column: starts at frame level, content vertically centered within frame height */
+        .share-player-sidebar {
+          align-self: stretch;
+          padding: 0;
+          background: none;
+          border: none;
+          box-shadow: none;
+          border-radius: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 20px;
+          /* push content down to align with the frame area, past the title row */
+          padding-top: clamp(50px, 6.5vw, 90px);
+        }
+
+        .share-player-panel {
+          flex: 0 0 auto;
+          padding-block: 0;
+          justify-content: flex-start;
+          align-items: center;
+          text-align: center;
+        }
+
+        .share-player-panel-kicker,
+        .share-player-panel-title,
+        .share-player-panel-copy {
+          text-align: center;
+          max-width: none;
+        }
+
+        .share-player-panel-title {
+          max-width: 16ch;
+        }
+
+        .share-player-panel-copy {
+          max-width: 26ch;
+        }
+
+        .share-player-actions {
+          flex: 0 0 auto;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          gap: 10px;
+          justify-content: center;
+          align-items: center;
+          margin-top: 0;
           width: 100%;
         }
+
+        .share-player-button {
+          flex: 1 1 0;
+          min-width: 0;
+          width: auto;
+          padding: 0 16px;
+          min-height: 42px;
+          font-size: 15px;
+        }
+
+        .share-player-link {
+          flex: 0 0 auto;
+          width: auto;
+          padding: 0;
+          background: none;
+          border-color: transparent;
+          box-shadow: none;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--ink-muted);
+          white-space: nowrap;
+          text-decoration: underline;
+          text-decoration-color: rgba(36, 56, 136, 0.28);
+          text-underline-offset: 3px;
+          min-height: auto;
+        }
+      }
+
+      .share-player-title {
+        transition: opacity 280ms ease;
+      }
+
+      .is-unavailable .share-player-title {
+        opacity: 0.38;
       }
 
       .share-player-button:disabled,
@@ -617,13 +695,13 @@
         </button>
       </div>
       <section class="share-player-card">
-        <div class="share-player-copy">
-          <h1 class="share-player-title" id="share-player-title">Вот она, родимая</h1>
-          <p class="share-player-status" id="share-player-status" hidden></p>
-        </div>
-
         <div class="share-player-body">
-          <div class="share-player-frame">
+          <div class="share-player-left">
+            <div class="share-player-copy">
+              <h1 class="share-player-title" id="share-player-title">Вот она, родимая</h1>
+              <p class="share-player-status" id="share-player-status" hidden></p>
+            </div>
+            <div class="share-player-frame">
             <div class="share-player-loader" id="share-player-loader">
               <div class="share-player-loader-shell">
                 <img
@@ -655,6 +733,7 @@
               hidden
             />
           </div>
+          </div><!-- /.share-player-left -->
 
           <aside class="share-player-sidebar">
             <div class="share-player-panel">

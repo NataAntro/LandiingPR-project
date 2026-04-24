@@ -206,6 +206,9 @@ const applyUnavailablePresentation = () => {
   clearPendingTimers();
   disableDownloadLink();
 
+  const pageNode = document.querySelector(".share-player-page");
+  if (pageNode) pageNode.classList.add("is-unavailable");
+
   setLoaderCopy("Коробка потерялась", "Вернитесь и попробуйте\nещё раз");
 
   if (isMobileViewport.matches) {
