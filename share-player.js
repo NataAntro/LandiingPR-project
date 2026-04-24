@@ -1,7 +1,6 @@
 const params = new URLSearchParams(window.location.search);
 
 const titleNode = document.querySelector("#share-player-title");
-const statusNode = document.querySelector("#share-player-status");
 const videoNode = document.querySelector("#share-player-video");
 const imageNode = document.querySelector("#share-player-image");
 const loaderNode = document.querySelector("#share-player-loader");
@@ -20,8 +19,9 @@ const LANDING_RETURN_URL = `/${LANDING_RETURN_TARGET_SELECTOR}`;
 const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
 const SHARE_PLAYER_STARTED_AT_PARAM = "startedAt";
 const PENDING_LONG_DELAY_MS = 20_000;
-const CLIENT_FALLBACK_DELAY_MS = 60_000;
+const CLIENT_FALLBACK_DELAY_MS = 45_000;
 const PLAYBACK_LOADING_MIN_VISIBLE_MS = 320;
+const VIDEO_PLAYBACK_START_TIMEOUT_MS = 1_800;
 const DISABLE_BACKEND_RENDER_REQUEST = false;
 const STATIC_FALLBACK_IMAGE_URL = new URL("./assets/postcard.jpeg", window.location.href).toString();
 const STATIC_FALLBACK_FILE_NAME = "hotbox-postcard.jpeg";
@@ -41,19 +41,13 @@ let pendingRenderAbortController = null;
 let pendingLongWaitTimeoutId = null;
 let clientFallbackTimeoutId = null;
 let playbackLoadingFinalizeTimeoutId = null;
+let videoPlaybackStartTimeoutId = null;
 let isClientFallbackRunning = false;
 let localVideoObjectUrl = "";
 let isVideoReady = false;
 let currentMediaKind = streamUrl ? "video" : "";
 let isPlaybackLoadingActive = false;
 let playbackLoadingStartedAt = 0;
-
-const setStatus = (message) => {
-  if (!statusNode) return;
-
-  statusNode.textContent = message;
-  statusNode.hidden = !message;
-};
 
 const setTitle = (message) => {
   if (titleNode) {
@@ -141,6 +135,15 @@ const clearPlaybackLoadingFinalizeTimer = () => {
   playbackLoadingFinalizeTimeoutId = null;
 };
 
+const clearVideoPlaybackStartTimer = () => {
+  if (!videoPlaybackStartTimeoutId) {
+    return;
+  }
+
+  window.clearTimeout(videoPlaybackStartTimeoutId);
+  videoPlaybackStartTimeoutId = null;
+};
+
 const revokeLocalVideoObjectUrl = () => {
   if (!localVideoObjectUrl) {
     return;
@@ -165,17 +168,17 @@ const applyPendingPresentation = ({
 const applyPendingLongWaitPresentation = () => {
   applyPendingPresentation({
     title: "Эмоций оказалось многовато",
-    copy: "Коробка сопротивляется! Если за минуту не закроем крышку — вернитесь на шаг назад, попробуем заново.",
+    copy: "Коробка сопротивляется! Если не выйдет снять про это кино, сделаем хотя бы фото на память. Результат точно будет!",
   });
   setLoaderCopy("Пакуем наболевшее!", "Ещё немного");
 };
 
 const applyClientFallbackPresentation = () => {
-  setLoaderCopy("Почти готово!", "Сохраняем картинкой");
+  setLoaderCopy("Делаем фото!", "Ещё секунда");
   setPanelCopy({
-    kicker: "Запасной маршрут",
-    title: "Готовим картинку",
-    copy: "Видео задержалось, поэтому бережно собираем коробку в картинку. Её можно будет скачать или отправить дальше.",
+    kicker: "План Б",
+    title: "Достаём фотоаппарат",
+    copy: "Эмоции зашкаливают, и снять про это целое видео не вышло. Зато мы успели щёлкнуть вашу коробку на память! Ещё пара секунд, и открытку можно будет отправить друзьям.",
   });
 };
 
@@ -345,6 +348,7 @@ const canUseClientFallback = () =>
 const showStaticFallbackImage = () => {
   clearPendingTimers();
   clearPlaybackLoadingFinalizeTimer();
+  clearVideoPlaybackStartTimer();
   isPlaybackLoadingActive = false;
   playbackLoadingStartedAt = 0;
   abortPendingRender();
@@ -521,23 +525,25 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
   isPlaybackLoadingActive = false;
   playbackLoadingStartedAt = 0;
   clearPlaybackLoadingFinalizeTimer();
+  clearVideoPlaybackStartTimer();
   let didResolve = false;
+  let hasPlaybackAttemptStarted = false;
+  let hasPlaybackStarted = false;
   const finishReady = () => {
     if (didResolve) {
       return;
     }
 
     didResolve = true;
+    clearVideoPlaybackStartTimer();
     isVideoReady = true;
     clearPendingTimers();
     setImageVisible(false);
     setVideoVisible(true);
     setLoaderVisible(false);
-    setStatus("");
     applyReadyPresentation();
     setDownloadState();
     shareButton.disabled = false;
-    videoNode.play().catch(() => {});
   };
   const enterPlaybackLoading = () => {
     if (isPlaybackLoadingActive || didResolve) {
@@ -549,9 +555,14 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
     clearPendingLongWaitTimer();
     applyPlaybackLoadingPresentation();
     setLoaderVisible(true);
-    setStatus("");
   };
-  const finalizeReady = () => {
+  const markPlaybackStarted = () => {
+    if (didResolve || hasPlaybackStarted) {
+      return;
+    }
+
+    hasPlaybackStarted = true;
+    clearVideoPlaybackStartTimer();
     enterPlaybackLoading();
 
     const elapsedMs = playbackLoadingStartedAt > 0
@@ -572,16 +583,48 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
 
     didResolve = true;
     clearPlaybackLoadingFinalizeTimer();
+    clearVideoPlaybackStartTimer();
 
     if (isTimedShareFlow && !isClientFallbackRunning) {
-      startClientFallbackRender("Не удалось открыть видео, поэтому готовим картинку.");
+      startClientFallbackRender();
       return;
     }
 
     applyRenderErrorPresentation();
     setLoaderVisible(true);
-    setStatus("Упаковка сорвалась");
     shareButton.disabled = false;
+  };
+  const startPlaybackAttempt = () => {
+    if (didResolve || hasPlaybackAttemptStarted) {
+      return;
+    }
+
+    hasPlaybackAttemptStarted = true;
+    enterPlaybackLoading();
+    clearVideoPlaybackStartTimer();
+    videoPlaybackStartTimeoutId = window.setTimeout(() => {
+      videoPlaybackStartTimeoutId = null;
+
+      if (!didResolve && !hasPlaybackStarted) {
+        finalizeError();
+      }
+    }, VIDEO_PLAYBACK_START_TIMEOUT_MS);
+
+    if (typeof videoNode.requestVideoFrameCallback === "function") {
+      videoNode.requestVideoFrameCallback(() => {
+        markPlaybackStarted();
+      });
+    }
+
+    const playPromise = videoNode.play();
+
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {
+        if (!didResolve && !hasPlaybackStarted) {
+          finalizeError();
+        }
+      });
+    }
   };
 
   applyWaitingPresentationForCurrentProgress();
@@ -590,7 +633,6 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
     scheduleClientFallbackRender();
   }
   setLoaderVisible(true);
-  setStatus("");
   disableDownloadLink();
   shareButton.disabled = true;
 
@@ -599,8 +641,10 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
   setVideoVisible(true);
   videoNode.removeAttribute("src");
   videoNode.load();
-  videoNode.addEventListener("loadeddata", finalizeReady, { once: true });
-  videoNode.addEventListener("canplay", finalizeReady, { once: true });
+  videoNode.addEventListener("loadeddata", startPlaybackAttempt, { once: true });
+  videoNode.addEventListener("canplay", startPlaybackAttempt, { once: true });
+  videoNode.addEventListener("playing", markPlaybackStarted, { once: true });
+  videoNode.addEventListener("timeupdate", markPlaybackStarted, { once: true });
   videoNode.addEventListener("error", finalizeError, { once: true });
   videoNode.src = streamUrl;
   videoNode.load();
@@ -621,6 +665,7 @@ const loadImageIntoPlayer = () => {
   isPlaybackLoadingActive = false;
   playbackLoadingStartedAt = 0;
   clearPlaybackLoadingFinalizeTimer();
+  clearVideoPlaybackStartTimer();
   let didResolve = false;
   const finalizeReady = () => {
     if (didResolve) {
@@ -633,7 +678,6 @@ const loadImageIntoPlayer = () => {
     setVideoVisible(false);
     setImageVisible(true);
     setLoaderVisible(false);
-    setStatus("");
     setDownloadState();
     applyImageReadyPresentation();
     shareButton.disabled = false;
@@ -645,12 +689,10 @@ const loadImageIntoPlayer = () => {
 
     didResolve = true;
     applyRenderErrorPresentation();
-    setStatus("Не получилось подготовить картинку.");
     shareButton.disabled = false;
   };
 
   setLoaderVisible(true);
-  setStatus("");
   disableDownloadLink();
   shareButton.disabled = true;
   setVideoVisible(false);
@@ -661,9 +703,7 @@ const loadImageIntoPlayer = () => {
   imageNode.src = downloadUrl;
 };
 
-const startClientFallbackRender = async (
-  statusMessage = "Видео не появилось вовремя, поэтому готовим картинку."
-) => {
+const startClientFallbackRender = async () => {
   if (isClientFallbackRunning || isVideoReady) {
     return;
   }
@@ -676,6 +716,7 @@ const startClientFallbackRender = async (
   isClientFallbackRunning = true;
   clearPendingTimers();
   clearPlaybackLoadingFinalizeTimer();
+  clearVideoPlaybackStartTimer();
   isPlaybackLoadingActive = false;
   playbackLoadingStartedAt = 0;
   abortPendingRender();
@@ -686,7 +727,6 @@ const startClientFallbackRender = async (
   setImageVisible(false);
   applyClientFallbackPresentation();
   setLoaderVisible(true);
-  setStatus(statusMessage);
   shareButton.disabled = true;
 
   try {
@@ -739,7 +779,7 @@ const requestServerRenderFromPendingPage = async () => {
   }
 
   if (!pendingContext.rendererBaseUrl) {
-    startClientFallbackRender("Бэкенд недоступен, поэтому готовим картинку.");
+    startClientFallbackRender();
     return;
   }
 
@@ -792,7 +832,7 @@ const requestServerRenderFromPendingPage = async () => {
     }
 
     console.error(error);
-    startClientFallbackRender("Видео на бэкенде не собралось, поэтому готовим картинку.");
+    startClientFallbackRender();
   } finally {
     pendingRenderAbortController = null;
   }
@@ -892,7 +932,6 @@ if (!streamUrl) {
   }
 
   setLoaderVisible(true);
-  setStatus("");
   shareButton.disabled = true;
 } else {
   loadVideoIntoPlayer();
@@ -922,12 +961,14 @@ backButton?.addEventListener("click", () => {
 window.addEventListener("pagehide", () => {
   clearPendingTimers();
   clearPlaybackLoadingFinalizeTimer();
+  clearVideoPlaybackStartTimer();
   abortPendingRender();
   revokeLocalVideoObjectUrl();
 });
 window.addEventListener("beforeunload", () => {
   clearPendingTimers();
   clearPlaybackLoadingFinalizeTimer();
+  clearVideoPlaybackStartTimer();
   abortPendingRender();
   revokeLocalVideoObjectUrl();
 });

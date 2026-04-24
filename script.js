@@ -25,6 +25,10 @@ const FAST_SCROLL_IGNORE_PROGRAMMATIC_MS = 1400;
 const FAST_SCROLL_MIN_DISTANCE_PX = 80;
 const FAST_SCROLL_DESKTOP_THRESHOLD_PX_PER_SEC = 2600;
 const FAST_SCROLL_MOBILE_THRESHOLD_PX_PER_SEC = 1600;
+const FAST_SCROLL_SCROLL_IDLE_RESET_MS = 180;
+const FAST_SCROLL_MOUSE_WHEEL_IGNORE_MS = 260;
+const FAST_SCROLL_RECENT_WHEEL_INPUT_MS = 220;
+const FAST_SCROLL_COARSE_WHEEL_DELTA_PX = 96;
 const FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC = 1100;
 const FAST_SCROLL_TOUCH_MIN_DISTANCE_PX = 72;
 const RETURN_SCROLL_STORAGE_KEY = "hotbox:return-scroll-target";
@@ -92,6 +96,9 @@ let lastScrollY = window.scrollY;
 let lastScrollTs = performance.now();
 let fastScrollWarningNode = null;
 let fastScrollWarningHideTimer = 0;
+let detectFastScrollFromWheelUntil = 0;
+let lastWheelY = 0;
+let lastWheelTs = 0;
 let lastTouchY = 0;
 let lastTouchX = 0;
 let lastTouchTs = 0;
@@ -327,6 +334,54 @@ const ignoreFastScrollForProgrammaticScroll = (
   ignoreFastScrollUntil = Math.max(ignoreFastScrollUntil, performance.now() + durationMs);
 };
 
+const isLikelyMouseWheel = (event) => {
+  const absDeltaY = Math.abs(event.deltaY);
+  const absDeltaX = Math.abs(event.deltaX);
+
+  if (absDeltaY <= absDeltaX || absDeltaY === 0) {
+    return false;
+  }
+
+  if (event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL) {
+    return true;
+  }
+
+  if (absDeltaY < FAST_SCROLL_COARSE_WHEEL_DELTA_PX) {
+    return false;
+  }
+
+  const now = performance.now();
+  const previousAbsDeltaY = Math.abs(lastWheelY);
+  const isStableStep = previousAbsDeltaY === absDeltaY && now - lastWheelTs < 220;
+  const isRoundStep = absDeltaY % 40 === 0 || absDeltaY % 50 === 0;
+
+  lastWheelY = event.deltaY;
+  lastWheelTs = now;
+
+  return Number.isInteger(event.deltaY) && (isRoundStep || isStableStep);
+};
+
+const handleWheelForFastScrollDetection = (event) => {
+  if (mobileBreakpoint.matches) {
+    return;
+  }
+
+  const now = performance.now();
+
+  if (!isLikelyMouseWheel(event)) {
+    detectFastScrollFromWheelUntil = Math.max(
+      detectFastScrollFromWheelUntil,
+      now + FAST_SCROLL_RECENT_WHEEL_INPUT_MS
+    );
+    return;
+  }
+
+  ignoreFastScrollUntil = Math.max(
+    ignoreFastScrollUntil,
+    now + FAST_SCROLL_MOUSE_WHEEL_IGNORE_MS
+  );
+};
+
 const emitFastScrollEvent = (detail) => {
   if (Array.isArray(window.dataLayer)) {
     window.dataLayer.push({
@@ -360,7 +415,13 @@ const handleFastScrollDetection = () => {
   lastScrollY = currentY;
   lastScrollTs = now;
 
-  if (deltaT <= 0 || now < ignoreFastScrollUntil || deltaY < FAST_SCROLL_MIN_DISTANCE_PX) {
+  if (
+    deltaT <= 0 ||
+    deltaT > FAST_SCROLL_SCROLL_IDLE_RESET_MS ||
+    (!mobileBreakpoint.matches && now > detectFastScrollFromWheelUntil) ||
+    now < ignoreFastScrollUntil ||
+    deltaY < FAST_SCROLL_MIN_DISTANCE_PX
+  ) {
     return;
   }
 
@@ -423,14 +484,17 @@ const handleTouchMove = (event) => {
     absDeltaY >= FAST_SCROLL_TOUCH_MIN_DISTANCE_PX &&
     speedPxPerSec >= FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC
   ) {
-    touchFastScrollHandled = triggerFastScroll({
-      speedPxPerSec: Math.round(speedPxPerSec),
-      scrollY: Math.round(window.scrollY),
-      deltaY: Math.round(absDeltaY),
-      direction: deltaY >= 0 ? "down" : "up",
-      viewport: "mobile",
-      thresholdPxPerSec: FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC,
-      input: "touch",
+    touchFastScrollHandled = true;
+    requestAnimationFrame(() => {
+      triggerFastScroll({
+        speedPxPerSec: Math.round(speedPxPerSec),
+        scrollY: Math.round(window.scrollY),
+        deltaY: Math.round(absDeltaY),
+        direction: deltaY >= 0 ? "down" : "up",
+        viewport: "mobile",
+        thresholdPxPerSec: FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC,
+        input: "touch",
+      });
     });
   }
 
@@ -1528,6 +1592,7 @@ createFastScrollWarningNode();
 ignoreFastScrollForProgrammaticScroll(2200);
 syncFastScrollBaseline();
 
+window.addEventListener("wheel", handleWheelForFastScrollDetection, { passive: true });
 window.addEventListener("scroll", handleFastScrollDetection, { passive: true });
 window.addEventListener("touchstart", handleTouchStart, { passive: true });
 window.addEventListener("touchmove", handleTouchMove, { passive: true });
