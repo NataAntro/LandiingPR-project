@@ -21,7 +21,6 @@ const SHARE_PLAYER_STARTED_AT_PARAM = "startedAt";
 const PENDING_LONG_DELAY_MS = 20_000;
 const CLIENT_FALLBACK_DELAY_MS = 45_000;
 const PLAYBACK_LOADING_MIN_VISIBLE_MS = 320;
-const VIDEO_PLAYBACK_START_TIMEOUT_MS = 1_800;
 const DISABLE_BACKEND_RENDER_REQUEST = false;
 const STATIC_FALLBACK_IMAGE_URL = new URL("./assets/postcard.jpeg", window.location.href).toString();
 const STATIC_FALLBACK_FILE_NAME = "hotbox-postcard.jpeg";
@@ -41,7 +40,6 @@ let pendingRenderAbortController = null;
 let pendingLongWaitTimeoutId = null;
 let clientFallbackTimeoutId = null;
 let playbackLoadingFinalizeTimeoutId = null;
-let videoPlaybackStartTimeoutId = null;
 let isClientFallbackRunning = false;
 let localVideoObjectUrl = "";
 let isVideoReady = false;
@@ -133,15 +131,6 @@ const clearPlaybackLoadingFinalizeTimer = () => {
 
   window.clearTimeout(playbackLoadingFinalizeTimeoutId);
   playbackLoadingFinalizeTimeoutId = null;
-};
-
-const clearVideoPlaybackStartTimer = () => {
-  if (!videoPlaybackStartTimeoutId) {
-    return;
-  }
-
-  window.clearTimeout(videoPlaybackStartTimeoutId);
-  videoPlaybackStartTimeoutId = null;
 };
 
 const revokeLocalVideoObjectUrl = () => {
@@ -348,7 +337,6 @@ const canUseClientFallback = () =>
 const showStaticFallbackImage = () => {
   clearPendingTimers();
   clearPlaybackLoadingFinalizeTimer();
-  clearVideoPlaybackStartTimer();
   isPlaybackLoadingActive = false;
   playbackLoadingStartedAt = 0;
   abortPendingRender();
@@ -525,17 +513,14 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
   isPlaybackLoadingActive = false;
   playbackLoadingStartedAt = 0;
   clearPlaybackLoadingFinalizeTimer();
-  clearVideoPlaybackStartTimer();
   let didResolve = false;
   let hasPlaybackAttemptStarted = false;
-  let hasPlaybackStarted = false;
   const finishReady = () => {
     if (didResolve) {
       return;
     }
 
     didResolve = true;
-    clearVideoPlaybackStartTimer();
     isVideoReady = true;
     clearPendingTimers();
     setImageVisible(false);
@@ -557,12 +542,10 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
     setLoaderVisible(true);
   };
   const markPlaybackStarted = () => {
-    if (didResolve || hasPlaybackStarted) {
+    if (didResolve) {
       return;
     }
 
-    hasPlaybackStarted = true;
-    clearVideoPlaybackStartTimer();
     enterPlaybackLoading();
 
     const elapsedMs = playbackLoadingStartedAt > 0
@@ -583,7 +566,6 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
 
     didResolve = true;
     clearPlaybackLoadingFinalizeTimer();
-    clearVideoPlaybackStartTimer();
 
     if (isTimedShareFlow && !isClientFallbackRunning) {
       startClientFallbackRender();
@@ -601,26 +583,12 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
 
     hasPlaybackAttemptStarted = true;
     enterPlaybackLoading();
-    clearVideoPlaybackStartTimer();
-    videoPlaybackStartTimeoutId = window.setTimeout(() => {
-      videoPlaybackStartTimeoutId = null;
-
-      if (!didResolve && !hasPlaybackStarted) {
-        finalizeError();
-      }
-    }, VIDEO_PLAYBACK_START_TIMEOUT_MS);
-
-    if (typeof videoNode.requestVideoFrameCallback === "function") {
-      videoNode.requestVideoFrameCallback(() => {
-        markPlaybackStarted();
-      });
-    }
 
     const playPromise = videoNode.play();
 
     if (playPromise && typeof playPromise.catch === "function") {
       playPromise.catch(() => {
-        if (!didResolve && !hasPlaybackStarted) {
+        if (!didResolve) {
           finalizeError();
         }
       });
@@ -665,7 +633,6 @@ const loadImageIntoPlayer = () => {
   isPlaybackLoadingActive = false;
   playbackLoadingStartedAt = 0;
   clearPlaybackLoadingFinalizeTimer();
-  clearVideoPlaybackStartTimer();
   let didResolve = false;
   const finalizeReady = () => {
     if (didResolve) {
@@ -716,7 +683,6 @@ const startClientFallbackRender = async () => {
   isClientFallbackRunning = true;
   clearPendingTimers();
   clearPlaybackLoadingFinalizeTimer();
-  clearVideoPlaybackStartTimer();
   isPlaybackLoadingActive = false;
   playbackLoadingStartedAt = 0;
   abortPendingRender();
@@ -961,14 +927,12 @@ backButton?.addEventListener("click", () => {
 window.addEventListener("pagehide", () => {
   clearPendingTimers();
   clearPlaybackLoadingFinalizeTimer();
-  clearVideoPlaybackStartTimer();
   abortPendingRender();
   revokeLocalVideoObjectUrl();
 });
 window.addEventListener("beforeunload", () => {
   clearPendingTimers();
   clearPlaybackLoadingFinalizeTimer();
-  clearVideoPlaybackStartTimer();
   abortPendingRender();
   revokeLocalVideoObjectUrl();
 });

@@ -1549,10 +1549,39 @@ input {
     height: 100%;
   }
 
-  /* Show a bit more of the lower part of card 1 art on wider phones. */
+  /* Card 1: crop a little from the top on mobile so the lower box text clears the rounded edge. */
+  #feature-card-1 .feature-card__media-visual > picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
   #feature-card-1 .feature-card__media-visual > picture > img,
   #feature-card-1 .feature-card__media-visual > picture img {
-    object-position: center bottom;
+    position: absolute;
+    top: -2%;
+    left: 50%;
+    width: auto;
+    height: 102%;
+    max-width: none;
+    object-fit: contain;
+    transform: translateX(-50%);
+  }
+
+  #feature-card-1 .feature-marker:nth-of-type(1) {
+    --marker-top: 33.394% !important;
+  }
+
+  #feature-card-1 .feature-marker:nth-of-type(2) {
+    --marker-top: 62.668% !important;
+  }
+
+  #feature-card-1 .feature-marker:nth-of-type(3) {
+    --marker-top: 56.854% !important;
+  }
+
+  #feature-card-1 .feature-marker:nth-of-type(4) {
+    --marker-top: 71.95% !important;
   }
 
   .feature-card--light .feature-card__media-visual > picture {
