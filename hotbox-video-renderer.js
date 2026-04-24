@@ -1,6 +1,7 @@
 (function () {
   const DEFAULT_BOX_LABEL_VALUE = "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)";
   const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
+  const POSTCARD_IMAGE_SOURCE = "./assets/postcard.jpeg";
   const VIDEO_EXPORT_MIME_TYPES = [
     { mimeType: "video/mp4", extension: "mp4" },
     { mimeType: 'video/mp4;codecs="avc1.42E01E,mp4a.40.2"', extension: "mp4" },
@@ -43,6 +44,17 @@
     fontStyle: "normal",
     fontWeight: "700",
   };
+  const POSTCARD_LABEL_LAYOUT = {
+    frameWidth: 768,
+    frameHeight: 1376,
+    x: 228,
+    y: 742,
+    width: 326,
+    height: 292,
+  };
+  const POSTCARD_LABEL_VERTICAL_SHIFT = -0.06;
+  const IMAGE_EXPORT_MIME_TYPE = "image/png";
+  const IMAGE_EXPORT_EXTENSION = "png";
 
   const splitBoxLabelForPreview = (value) => {
     const trimmedValue = String(value || "").trim();
@@ -183,6 +195,64 @@
     }
 
     return Boolean(getVideoExportConfig());
+  };
+
+  const canRenderImageInBrowser = () => typeof HTMLCanvasElement !== "undefined";
+
+  const ensureCanvasFontsLoaded = async () => {
+    if (!document.fonts) {
+      return;
+    }
+
+    const fontLoads = [
+      document.fonts.load(buildCanvasFont(PRIMARY_LABEL_STYLE, 36), "КОНТЕНТ 2020–2024"),
+      document.fonts.load(buildCanvasFont(SECONDARY_LABEL_STYLE, 36), "(НЕ КАНТОВАТЬ)"),
+    ];
+
+    await Promise.all(fontLoads);
+    await document.fonts.ready;
+  };
+
+  const loadExportImage = async () => {
+    const source = POSTCARD_IMAGE_SOURCE;
+    const image = new Image();
+
+    image.decoding = "async";
+    image.src = source;
+
+    if (typeof image.decode === "function") {
+      try {
+        await image.decode();
+      } catch (error) {
+        if (!image.complete || image.naturalWidth === 0) {
+          throw error;
+        }
+      }
+    } else {
+      await new Promise((resolve, reject) => {
+        const handleLoad = () => {
+          cleanup();
+          resolve();
+        };
+        const handleError = () => {
+          cleanup();
+          reject(new Error(`CTA export image failed to load: ${source}`));
+        };
+        const cleanup = () => {
+          image.removeEventListener("load", handleLoad);
+          image.removeEventListener("error", handleError);
+        };
+
+        image.addEventListener("load", handleLoad, { once: true });
+        image.addEventListener("error", handleError, { once: true });
+      });
+    }
+
+    if (!image.complete || image.naturalWidth === 0) {
+      throw new Error(`CTA export image failed to load: ${source}`);
+    }
+
+    return image;
   };
 
   const waitForVideoReady = async (video) => {
@@ -413,6 +483,103 @@
       recorder.stop();
     });
 
+  const renderImageFile = async ({ label } = {}) => {
+    if (!canRenderImageInBrowser()) {
+      throw new Error("Image export is unsupported in this browser.");
+    }
+
+    await ensureCanvasFontsLoaded();
+
+    const exportImage = await loadExportImage();
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      throw new Error("Canvas 2D context is unavailable.");
+    }
+
+    const exportWidth = exportImage.naturalWidth || 1372;
+    const exportHeight = exportImage.naturalHeight || 1372;
+    const scaleX = exportWidth / POSTCARD_LABEL_LAYOUT.frameWidth;
+    const scaleY = exportHeight / POSTCARD_LABEL_LAYOUT.frameHeight;
+    const labelBox = {
+      x: POSTCARD_LABEL_LAYOUT.x * scaleX,
+      y: POSTCARD_LABEL_LAYOUT.y * scaleY,
+      width: POSTCARD_LABEL_LAYOUT.width * scaleX,
+      height: POSTCARD_LABEL_LAYOUT.height * scaleY,
+    };
+    const contentWidth = labelBox.width * 0.94;
+    const centerX = labelBox.x + labelBox.width / 2;
+    const primaryFontSize = labelBox.height * 0.15;
+    const secondaryFontSize = labelBox.height * 0.112;
+    const primaryLineHeight = primaryFontSize * 1.04;
+    const secondaryLineHeight = secondaryFontSize * 1.08;
+    const [primaryText, secondaryText] = splitBoxLabelForPreview(
+      label || DEFAULT_BOX_LABEL_VALUE
+    );
+
+    canvas.width = exportWidth;
+    canvas.height = exportHeight;
+
+    ctx.clearRect(0, 0, exportWidth, exportHeight);
+    ctx.drawImage(exportImage, 0, 0, exportWidth, exportHeight);
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.font = buildCanvasFont(PRIMARY_LABEL_STYLE, primaryFontSize);
+    const primaryLines = wrapTextLine(ctx, primaryText, contentWidth);
+    ctx.font = buildCanvasFont(SECONDARY_LABEL_STYLE, secondaryFontSize);
+    const secondaryLines = wrapTextLine(ctx, secondaryText, contentWidth);
+    const gap = secondaryLines.length > 0 ? labelBox.height * 0.028 : 0;
+    const totalTextHeight =
+      primaryLines.length * primaryLineHeight +
+      secondaryLines.length * secondaryLineHeight +
+      gap;
+    let lineY =
+      labelBox.y +
+      Math.max((labelBox.height - totalTextHeight) / 2, labelBox.height * 0.04) +
+      labelBox.height * (0.01 + POSTCARD_LABEL_VERTICAL_SHIFT);
+
+    ctx.fillStyle = PRIMARY_LABEL_STYLE.color;
+    ctx.font = buildCanvasFont(PRIMARY_LABEL_STYLE, primaryFontSize);
+    primaryLines.forEach((line) => {
+      ctx.fillText(line, centerX, lineY);
+      lineY += primaryLineHeight;
+    });
+
+    if (secondaryLines.length > 0) {
+      lineY += gap;
+      ctx.fillStyle = SECONDARY_LABEL_STYLE.color;
+      ctx.font = buildCanvasFont(SECONDARY_LABEL_STYLE, secondaryFontSize);
+      secondaryLines.forEach((line) => {
+        ctx.fillText(line, centerX, lineY);
+        lineY += secondaryLineHeight;
+      });
+    }
+
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((nextBlob) => {
+        if (!nextBlob) {
+          reject(new Error("PNG export failed."));
+          return;
+        }
+
+        resolve(nextBlob);
+      }, IMAGE_EXPORT_MIME_TYPE);
+    });
+
+    const fileName = getTimestampedExportFileName(IMAGE_EXPORT_EXTENSION);
+
+    return {
+      blob,
+      fileName,
+      file:
+        typeof File === "function"
+          ? new File([blob], fileName, { type: IMAGE_EXPORT_MIME_TYPE, lastModified: Date.now() })
+          : blob,
+    };
+  };
+
   const renderVideoFile = async ({ label } = {}) => {
     const exportConfig = getVideoExportConfig();
 
@@ -424,9 +591,7 @@
       throw new Error("Canvas captureStream is unavailable.");
     }
 
-    if (document.fonts?.ready) {
-      await document.fonts.ready;
-    }
+    await ensureCanvasFontsLoaded();
 
     const video = await createExportVideoNode();
     const canvas = document.createElement("canvas");
@@ -501,7 +666,9 @@
   };
 
   window.HotboxVideoRenderer = {
+    canRenderImageInBrowser,
     canRenderVideoInBrowser,
+    renderImageFile,
     renderVideoFile,
   };
 })();

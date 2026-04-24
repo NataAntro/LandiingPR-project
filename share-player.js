@@ -3,6 +3,7 @@ const params = new URLSearchParams(window.location.search);
 const titleNode = document.querySelector("#share-player-title");
 const statusNode = document.querySelector("#share-player-status");
 const videoNode = document.querySelector("#share-player-video");
+const imageNode = document.querySelector("#share-player-image");
 const loaderNode = document.querySelector("#share-player-loader");
 const loaderTitleNode = document.querySelector("#share-player-loader-title");
 const loaderCopyNode = document.querySelector("#share-player-loader-copy");
@@ -31,12 +32,14 @@ const startedAtParam = Number(params.get(SHARE_PLAYER_STARTED_AT_PARAM) || 0);
 const isTimedShareFlow = isPending || startedAtParam > 0;
 let shareFilePromise = null;
 let shareFile = null;
+let shareFileGeneration = 0;
 let pendingRenderAbortController = null;
 let pendingLongWaitTimeoutId = null;
 let clientFallbackTimeoutId = null;
 let isClientFallbackRunning = false;
 let localVideoObjectUrl = "";
 let isVideoReady = false;
+let currentMediaKind = streamUrl ? "video" : "";
 
 const setStatus = (message) => {
   if (!statusNode) return;
@@ -67,6 +70,22 @@ const setLoaderVisible = (isVisible) => {
   }
 
   loaderNode.hidden = !isVisible;
+};
+
+const setVideoVisible = (isVisible) => {
+  if (!videoNode) {
+    return;
+  }
+
+  videoNode.hidden = !isVisible;
+};
+
+const setImageVisible = (isVisible) => {
+  if (!imageNode) {
+    return;
+  }
+
+  imageNode.hidden = !isVisible;
 };
 
 const setPanelCopy = ({ kicker = "", title = "", copy = "" } = {}) => {
@@ -135,11 +154,11 @@ const applyPendingLongWaitPresentation = () => {
 };
 
 const applyClientFallbackPresentation = () => {
-  setLoaderCopy("Почти готово!", "Собираем сами");
+  setLoaderCopy("Почти готово!", "Сохраняем картинкой");
   setPanelCopy({
     kicker: "Запасной маршрут",
-    title: "Готовим коробку прямо здесь",
-    copy: "Сервер задержался, поэтому собираем видео прямо в браузере. Это займёт ещё немного времени, зато коробка останется с вами.",
+    title: "Готовим картинку",
+    copy: "Видео задержалось, поэтому бережно собираем коробку в картинку. Её можно будет скачать или отправить дальше.",
   });
 };
 
@@ -157,6 +176,14 @@ const applyReadyPresentation = () => {
     kicker: "Готово!",
     title: "Можно отправлять",
     copy: "Ваша коробка отпущения собрана. Отправьте её тем, кто вас понимает, или скачайте на память об этом переезде.",
+  });
+};
+
+const applyImageReadyPresentation = () => {
+  setPanelCopy({
+    kicker: "Готово!",
+    title: "Фото на память",
+    copy: "Снять блокбастер про вашу коробку не вышло — камера не выдержала накала страстей. Зато получилась отличная открытка! Отправьте её тем, кто в теме, или сохраните себе на память.",
   });
 };
 
@@ -283,7 +310,7 @@ const abortPendingRender = () => {
 };
 
 const canUseClientFallback = () =>
-  Boolean(window.HotboxVideoRenderer?.canRenderVideoInBrowser?.());
+  Boolean(window.HotboxVideoRenderer?.canRenderImageInBrowser?.());
 
 const getShareFlowStartedAt = () => {
   const pendingContext = getPendingRenderContext();
@@ -302,6 +329,38 @@ const getShareFlowStartedAt = () => {
 const getRemainingDelay = (targetDelayMs) =>
   Math.max(0, targetDelayMs - (Date.now() - getShareFlowStartedAt()));
 
+const getShareFileFallbackType = () => {
+  const normalizedFileName = String(fileName || "").toLowerCase();
+
+  if (normalizedFileName.endsWith(".png")) {
+    return "image/png";
+  }
+
+  if (normalizedFileName.endsWith(".jpg") || normalizedFileName.endsWith(".jpeg")) {
+    return "image/jpeg";
+  }
+
+  if (normalizedFileName.endsWith(".webp")) {
+    return "image/webp";
+  }
+
+  if (normalizedFileName.endsWith(".gif")) {
+    return "image/gif";
+  }
+
+  if (currentMediaKind === "image") {
+    return "image/png";
+  }
+
+  return "video/mp4";
+};
+
+const resetShareFileCache = () => {
+  shareFileGeneration += 1;
+  shareFile = null;
+  shareFilePromise = null;
+};
+
 const schedulePendingLongWaitPresentation = () => {
   clearPendingLongWaitTimer();
   pendingLongWaitTimeoutId = window.setTimeout(() => {
@@ -313,25 +372,29 @@ const schedulePendingLongWaitPresentation = () => {
   }, getRemainingDelay(PENDING_LONG_DELAY_MS));
 };
 
-const fetchShareFile = async () => {
-  if (!downloadUrl) {
+const fetchShareFile = async ({
+  targetDownloadUrl = downloadUrl,
+  targetFileName = fileName,
+  fallbackType = getShareFileFallbackType(),
+} = {}) => {
+  if (!targetDownloadUrl) {
     return null;
   }
 
-  const response = await fetch(downloadUrl, {
+  const response = await fetch(targetDownloadUrl, {
     mode: "cors",
     credentials: "omit",
     cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch video: ${response.status}`);
+    throw new Error(`Failed to fetch media: ${response.status}`);
   }
 
   const blob = await response.blob();
 
-  return new File([blob], fileName, {
-    type: blob.type || "video/mp4",
+  return new File([blob], targetFileName, {
+    type: blob.type || fallbackType,
     lastModified: Date.now(),
   });
 };
@@ -346,13 +409,29 @@ const primeShareFile = () => {
   }
 
   if (!shareFilePromise) {
-    shareFilePromise = fetchShareFile()
+    const requestGeneration = shareFileGeneration;
+    const targetDownloadUrl = downloadUrl;
+    const targetFileName = fileName;
+    const fallbackType = getShareFileFallbackType();
+
+    shareFilePromise = fetchShareFile({
+      targetDownloadUrl,
+      targetFileName,
+      fallbackType,
+    })
       .then((file) => {
+        if (requestGeneration !== shareFileGeneration) {
+          return shareFile;
+        }
+
         shareFile = file;
         return file;
       })
       .catch((error) => {
-        shareFilePromise = null;
+        if (requestGeneration === shareFileGeneration) {
+          shareFilePromise = null;
+        }
+
         throw error;
       });
   }
@@ -366,6 +445,7 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
   }
 
   isVideoReady = false;
+  currentMediaKind = "video";
   let didResolve = false;
   const finalizeReady = () => {
     if (didResolve) {
@@ -375,6 +455,8 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
     didResolve = true;
     isVideoReady = true;
     clearPendingTimers();
+    setImageVisible(false);
+    setVideoVisible(true);
     setLoaderVisible(false);
     setStatus("");
     applyReadyPresentation();
@@ -388,8 +470,8 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
 
     didResolve = true;
 
-    if (canUseClientFallback() && !isClientFallbackRunning) {
-      startClientFallbackRender();
+    if (isTimedShareFlow && canUseClientFallback() && !isClientFallbackRunning) {
+      startClientFallbackRender("Не удалось открыть видео, поэтому готовим картинку.");
       return;
     }
 
@@ -410,6 +492,8 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
   shareButton.disabled = true;
 
   videoNode.pause();
+  setImageVisible(false);
+  setVideoVisible(true);
   videoNode.removeAttribute("src");
   videoNode.load();
   videoNode.addEventListener("loadeddata", finalizeReady, { once: true });
@@ -424,14 +508,63 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
   });
 };
 
-const startClientFallbackRender = async () => {
+const loadImageIntoPlayer = () => {
+  if (!downloadUrl || !imageNode) {
+    return;
+  }
+
+  currentMediaKind = "image";
+  isVideoReady = false;
+  let didResolve = false;
+  const finalizeReady = () => {
+    if (didResolve) {
+      return;
+    }
+
+    didResolve = true;
+    isVideoReady = true;
+    clearPendingTimers();
+    setVideoVisible(false);
+    setImageVisible(true);
+    setLoaderVisible(false);
+    setStatus("");
+    setDownloadState();
+    applyImageReadyPresentation();
+    shareButton.disabled = false;
+  };
+  const finalizeError = () => {
+    if (didResolve) {
+      return;
+    }
+
+    didResolve = true;
+    applyRenderErrorPresentation();
+    setStatus("Не получилось подготовить картинку.");
+    shareButton.disabled = false;
+  };
+
+  setLoaderVisible(true);
+  setStatus("");
+  setDownloadState();
+  shareButton.disabled = true;
+  setVideoVisible(false);
+  setImageVisible(false);
+  imageNode.src = "";
+  imageNode.addEventListener("load", finalizeReady, { once: true });
+  imageNode.addEventListener("error", finalizeError, { once: true });
+  imageNode.src = downloadUrl;
+};
+
+const startClientFallbackRender = async (
+  statusMessage = "Видео не появилось вовремя, поэтому готовим картинку."
+) => {
   if (isClientFallbackRunning || isVideoReady) {
     return;
   }
 
   if (!canUseClientFallback()) {
     applyRenderErrorPresentation();
-    setStatus("Упаковка сорвалась");
+    setStatus("Не получилось подготовить картинку.");
     return;
   }
 
@@ -441,28 +574,34 @@ const startClientFallbackRender = async () => {
   videoNode.pause();
   videoNode.removeAttribute("src");
   videoNode.load();
+  setVideoVisible(false);
+  setImageVisible(false);
   applyClientFallbackPresentation();
   setLoaderVisible(true);
-  setStatus("Сервер задержался, поэтому собираем коробку прямо в браузере.");
+  setStatus(statusMessage);
   shareButton.disabled = true;
 
   try {
-    const exportPayload = await window.HotboxVideoRenderer.renderVideoFile({ label });
+    const exportPayload = await window.HotboxVideoRenderer.renderImageFile({
+      label,
+    });
 
     revokeLocalVideoObjectUrl();
     localVideoObjectUrl = URL.createObjectURL(exportPayload.blob);
-    streamUrl = localVideoObjectUrl;
+    streamUrl = "";
     downloadUrl = localVideoObjectUrl;
     fileName = exportPayload.fileName || fileName;
+    resetShareFileCache();
     shareFile = exportPayload.file || null;
     shareFilePromise = shareFile ? Promise.resolve(shareFile) : null;
+    currentMediaKind = "image";
 
     clearPendingRenderRequest();
-    loadVideoIntoPlayer({ skipPendingTimers: true });
+    loadImageIntoPlayer();
   } catch (error) {
     console.error(error);
     applyRenderErrorPresentation();
-    setStatus("Упаковка сорвалась");
+    setStatus("Не получилось подготовить картинку.");
   } finally {
     isClientFallbackRunning = false;
   }
@@ -488,11 +627,13 @@ const requestServerRenderFromPendingPage = async () => {
   const pendingContext = getPendingRenderContext();
 
   if (!pendingContext.rendererBaseUrl) {
-    if (!canUseClientFallback()) {
-      applyRenderErrorPresentation();
-      setStatus("Упаковка сорвалась");
+    if (canUseClientFallback()) {
+      startClientFallbackRender("Бэкенд недоступен, поэтому готовим картинку.");
+      return;
     }
 
+    applyRenderErrorPresentation();
+    setStatus("Упаковка сорвалась");
     return;
   }
 
@@ -527,8 +668,7 @@ const requestServerRenderFromPendingPage = async () => {
       ? resolveRendererUrl(pendingContext.rendererBaseUrl, payload.downloadUrl)
       : streamUrl;
     fileName = payload.fileName || fileName;
-    shareFile = null;
-    shareFilePromise = null;
+    resetShareFileCache();
 
     clearPendingTimers();
     clearPendingRenderRequest();
@@ -547,20 +687,20 @@ const requestServerRenderFromPendingPage = async () => {
 
     console.error(error);
 
-    if (!canUseClientFallback()) {
-      applyRenderErrorPresentation();
-      setStatus("Упаковка сорвалась");
+    if (canUseClientFallback()) {
+      startClientFallbackRender("Видео на бэкенде не собралось, поэтому готовим картинку.");
       return;
     }
 
-    setStatus("Сервер задержался. Ждём ещё немного и подключим запасной маршрут.");
+    applyRenderErrorPresentation();
+    setStatus("Упаковка сорвалась");
   } finally {
     pendingRenderAbortController = null;
   }
 };
 
 const shareCurrentVideo = async () => {
-  if (!streamUrl) {
+  if (!streamUrl && !downloadUrl) {
     return;
   }
 
