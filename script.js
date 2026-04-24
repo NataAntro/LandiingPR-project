@@ -15,6 +15,8 @@ const markers = Array.from(document.querySelectorAll("[data-marker]"));
 const adaptiveCopyNodes = document.querySelectorAll("[data-mobile]");
 const mobileBreakpoint = window.matchMedia("(max-width: 767px)");
 const popupViewportGap = 12;
+const popupSideTailInset = 20;
+const popupTailSize = 12;
 const FAST_SCROLL_EVENT_NAME = "landing:fast-scroll";
 const FAST_SCROLL_WARNING_IMAGE_SOURCE = "./assets/warning.webp";
 const FAST_SCROLL_WARNING_VISIBLE_MS = 950;
@@ -501,39 +503,106 @@ const resetMarkerPopupFit = (marker) => {
   if (!popup) return;
 
   popup.style.setProperty("--popup-shift-x", "0px");
+  popup.style.setProperty("--popup-tail-shift-x", "0px");
 };
 
-const fitMarkerPopup = (marker) => {
+const applyMarkerPopupFit = (marker, fit) => {
   const popup = marker?.querySelector(".marker__popup");
 
-  if (!popup) return;
+  if (!popup || !fit) return;
+
+  popup.style.setProperty("--popup-shift-x", `${fit.shiftX.toFixed(2)}px`);
+  popup.style.setProperty("--popup-tail-shift-x", `${fit.tailShiftX.toFixed(2)}px`);
+};
+
+const resolveMarkerPopupBoundaryContainer = (marker) => {
+  const mediaVisual = marker?.closest(".feature-card__media-visual");
+  if (mediaVisual) return mediaVisual;
+
+  const media = marker?.closest(".feature-card__media");
+  return media?.querySelector(".feature-card__media-visual") ?? null;
+};
+
+const getPopupTailCenterOffset = (popup, popupWidth) => {
+  if (!popup) return popupWidth / 2;
+
+  const sideTailCenterOffset = popupSideTailInset + popupTailSize / 2;
+
+  if (
+    popup.classList.contains("marker__popup--right") ||
+    popup.classList.contains("marker__popup--above-right")
+  ) {
+    return sideTailCenterOffset;
+  }
+
+  if (
+    popup.classList.contains("marker__popup--left") ||
+    popup.classList.contains("marker__popup--above-left")
+  ) {
+    return popupWidth - sideTailCenterOffset;
+  }
+
+  return popupWidth / 2;
+};
+
+const getPopupShiftAdjustment = (popup) => {
+  const marker = popup?.closest("[data-marker]");
+  if (!marker || mobileBreakpoint.matches) return 0;
+
+  const rawValue = marker.style.getPropertyValue("--popup-shift-desktop").trim();
+  const parsedValue = Number.parseFloat(rawValue);
+
+  return Number.isFinite(parsedValue) ? parsedValue : 0;
+};
+
+const measureMarkerPopupFit = (marker) => {
+  const popup = marker?.querySelector(".marker__popup");
+
+  if (!popup) return null;
 
   resetMarkerPopupFit(marker);
 
   const popupRect = popup.getBoundingClientRect();
   const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
   const viewportOffsetLeft = window.visualViewport?.offsetLeft ?? 0;
-  const minLeft = viewportOffsetLeft + popupViewportGap;
-  const maxRight = viewportOffsetLeft + viewportWidth - popupViewportGap;
-  let shiftX = 0;
 
-  if (popupRect.left < minLeft) {
-    shiftX = minLeft - popupRect.left;
-  } else if (popupRect.right > maxRight) {
-    shiftX = maxRight - popupRect.right;
+  const imageContainer = resolveMarkerPopupBoundaryContainer(marker);
+  let minLeft, maxRight;
+  if (imageContainer) {
+    const cr = imageContainer.getBoundingClientRect();
+    minLeft = cr.left + popupViewportGap;
+    maxRight = cr.right - popupViewportGap;
+  } else {
+    minLeft = viewportOffsetLeft + popupViewportGap;
+    maxRight = viewportOffsetLeft + viewportWidth - popupViewportGap;
   }
 
-  popup.style.setProperty("--popup-shift-x", `${shiftX.toFixed(2)}px`);
+  const markerRect = marker.getBoundingClientRect();
+  const markerCenterX = markerRect.left + markerRect.width / 2;
+  const tailCenterOffset = getPopupTailCenterOffset(popup, popupRect.width);
+  const shiftAdjustmentX = getPopupShiftAdjustment(popup);
+  const hasManualDesktopShift = shiftAdjustmentX !== 0;
+  const minShiftX = minLeft - popupRect.left;
+  const maxShiftX = maxRight - popupRect.right;
+  const desiredShiftX = markerCenterX - (popupRect.left + tailCenterOffset) + shiftAdjustmentX;
+  const shiftX = Math.min(maxShiftX, Math.max(minShiftX, desiredShiftX));
+  const tailShiftX = hasManualDesktopShift
+    ? markerCenterX - (popupRect.left + shiftX + tailCenterOffset)
+    : 0;
+
+  return { shiftX, tailShiftX };
 };
 
-const fitOpenMarkerPopups = () => {
-  markers.forEach((marker) => {
-    if (marker.classList.contains("is-active")) {
-      fitMarkerPopup(marker);
-      return;
-    }
+const fitMarkerPopup = (marker) => {
+  const fit = measureMarkerPopupFit(marker);
+  applyMarkerPopupFit(marker, fit);
+  return fit;
+};
 
-    resetMarkerPopupFit(marker);
+const primeMarkerPopupFits = () => {
+  markers.forEach((marker) => {
+    const fit = measureMarkerPopupFit(marker);
+    applyMarkerPopupFit(marker, fit);
   });
 };
 
@@ -543,7 +612,6 @@ const closeMarkers = (exceptMarker) => {
 
     marker.classList.remove("is-active");
     marker.setAttribute("aria-expanded", "false");
-    resetMarkerPopupFit(marker);
   });
 };
 
@@ -1345,8 +1413,6 @@ const tryNativeShare = async (exportPayload) => {
     return false;
   }
 
-  const shareTitle = "Подписанная коробка";
-  const shareText = input?.value.trim() || shareTitle;
   const { downloadUrl } = exportPayload ?? {};
 
   if (downloadUrl) {
@@ -1355,8 +1421,6 @@ const tryNativeShare = async (exportPayload) => {
     if (file) {
       const fileSharePayload = {
         files: [file],
-        title: shareTitle,
-        text: shareText,
       };
 
       if (
@@ -1370,11 +1434,7 @@ const tryNativeShare = async (exportPayload) => {
   }
 
   if (downloadUrl) {
-    await navigator.share({
-      title: shareTitle,
-      text: shareText,
-      url: downloadUrl,
-    });
+    await navigator.share({ url: downloadUrl });
     return true;
   }
 
@@ -1433,30 +1493,20 @@ if (heroCtaButton && featuresSection && firstFeatureCard) {
 }
 
 markers.forEach((marker) => {
-  marker.addEventListener("mouseenter", () => {
-    fitMarkerPopup(marker);
-  });
-
-  marker.addEventListener("focusin", () => {
-    fitMarkerPopup(marker);
-  });
-
   marker.addEventListener("click", (event) => {
     event.preventDefault();
 
     const shouldOpen = !marker.classList.contains("is-active");
     closeMarkers(marker);
-    marker.classList.toggle("is-active", shouldOpen);
-    marker.setAttribute("aria-expanded", String(shouldOpen));
 
     if (shouldOpen) {
-      window.requestAnimationFrame(() => {
-        fitMarkerPopup(marker);
-      });
+      marker.classList.add("is-active");
+      marker.setAttribute("aria-expanded", "true");
       return;
     }
 
-    resetMarkerPopupFit(marker);
+    marker.classList.remove("is-active");
+    marker.setAttribute("aria-expanded", "false");
   });
 });
 
@@ -1472,7 +1522,7 @@ document.addEventListener("keydown", (event) => {
 
 applyResponsiveCopy();
 syncLabelPreview();
-fitOpenMarkerPopups();
+primeMarkerPopupFits();
 createFastScrollWarningNode();
 ignoreFastScrollForProgrammaticScroll(2200);
 syncFastScrollBaseline();
@@ -1482,16 +1532,18 @@ window.addEventListener("touchstart", handleTouchStart, { passive: true });
 window.addEventListener("touchmove", handleTouchMove, { passive: true });
 window.addEventListener("touchend", handleTouchEnd, { passive: true });
 window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
-window.addEventListener("resize", fitOpenMarkerPopups, { passive: true });
+window.addEventListener("load", primeMarkerPopupFits, { once: true });
+window.addEventListener("resize", primeMarkerPopupFits, { passive: true });
 window.addEventListener("pageshow", () => {
   ignoreFastScrollForProgrammaticScroll(2200);
   syncFastScrollBaseline();
+  primeMarkerPopupFits();
 });
 document.addEventListener(FAST_SCROLL_EVENT_NAME, showFastScrollWarning);
 
 if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", fitOpenMarkerPopups, { passive: true });
-  window.visualViewport.addEventListener("scroll", fitOpenMarkerPopups, { passive: true });
+  window.visualViewport.addEventListener("resize", primeMarkerPopupFits, { passive: true });
+  window.visualViewport.addEventListener("scroll", primeMarkerPopupFits, { passive: true });
 }
 
 if (typeof mobileBreakpoint.addEventListener === "function") {
@@ -1499,13 +1551,13 @@ if (typeof mobileBreakpoint.addEventListener === "function") {
     applyResponsiveCopy();
     syncLabelPreview();
     setShareStatus("");
-    fitOpenMarkerPopups();
+    primeMarkerPopupFits();
   });
 } else if (typeof mobileBreakpoint.addListener === "function") {
   mobileBreakpoint.addListener(() => {
     applyResponsiveCopy();
     syncLabelPreview();
     setShareStatus("");
-    fitOpenMarkerPopups();
+    primeMarkerPopupFits();
   });
 }

@@ -19,7 +19,7 @@ const LANDING_RETURN_TARGET_SELECTOR = "#cta-title";
 const LANDING_RETURN_URL = `/${LANDING_RETURN_TARGET_SELECTOR}`;
 const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
 const SHARE_PLAYER_STARTED_AT_PARAM = "startedAt";
-const PENDING_LONG_DELAY_MS = 30_000;
+const PENDING_LONG_DELAY_MS = 20_000;
 const CLIENT_FALLBACK_DELAY_MS = 60_000;
 const PLAYBACK_LOADING_MIN_VISIBLE_MS = 320;
 const DISABLE_BACKEND_RENDER_REQUEST = false;
@@ -511,6 +511,7 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
     setLoaderVisible(false);
     setStatus("");
     applyReadyPresentation();
+    setDownloadState();
     shareButton.disabled = false;
     videoNode.play().catch(() => {});
   };
@@ -566,7 +567,7 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
   }
   setLoaderVisible(true);
   setStatus("");
-  setDownloadState();
+  disableDownloadLink();
   shareButton.disabled = true;
 
   videoNode.pause();
@@ -626,7 +627,7 @@ const loadImageIntoPlayer = () => {
 
   setLoaderVisible(true);
   setStatus("");
-  setDownloadState();
+  disableDownloadLink();
   shareButton.disabled = true;
   setVideoVisible(false);
   setImageVisible(false);
@@ -799,8 +800,6 @@ const shareCurrentVideo = async () => {
       if (file) {
         const filePayload = {
           files: [file],
-          title: label,
-          text: label,
         };
 
         if (
@@ -870,7 +869,7 @@ const scrollOpenerToLandingTarget = () => {
 };
 
 setTitle("Вот она, родимая");
-setDownloadState();
+disableDownloadLink();
 
 if (!streamUrl) {
   if (isPending) {

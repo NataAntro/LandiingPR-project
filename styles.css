@@ -405,6 +405,7 @@ input {
   -webkit-tap-highlight-color: transparent;
   --marker-ink: var(--brand);
   --marker-surface: var(--white);
+  --popup-shift-x: 0px;
   --marker-glow: rgba(233, 241, 254, 0.55);
   --marker-shadow: rgba(36, 56, 136, 0.2);
   --marker-border-width: 2px;
@@ -548,8 +549,9 @@ input {
   gap: 4px;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 160ms ease, transform 160ms ease;
-  --popup-shift-x: 0px;
+  transition: opacity 160ms ease;
+  --popup-tail-shift-x: 0px;
+  --popup-side-tail-center-offset: 26px;
   --popup-transform-hidden: translateX(calc(-50% + var(--popup-shift-x))) translateY(-4px);
   --popup-transform-visible: translateX(calc(-50% + var(--popup-shift-x))) translateY(0);
   transform: var(--popup-transform-hidden);
@@ -595,11 +597,24 @@ input {
   --popup-transform-visible: translateX(var(--popup-shift-x)) translateY(0);
 }
 
+.marker__popup--title-fit {
+  width: fit-content;
+  max-width: min(var(--popup-max-width, 320px), calc(100vw - 48px));
+}
+
+.marker__popup--title-fit .marker__popup-title {
+  white-space: nowrap;
+}
+
+.marker__popup--title-fit .marker__popup-text {
+  max-width: var(--popup-copy-width, 23ch);
+}
+
 .marker__popup::after {
   content: '';
   position: absolute;
   top: -6px;
-  left: clamp(12px, calc(50% - var(--popup-shift-x)), calc(100% - 12px));
+  left: calc(50% + var(--popup-tail-shift-x));
   width: 12px;
   height: 12px;
   background: var(--brand);
@@ -608,14 +623,11 @@ input {
 }
 
 .marker__popup--left::after {
-  left: auto;
-  right: clamp(6px, calc(6px + var(--popup-shift-x)), calc(100% - 18px));
-  transform: rotate(45deg);
+  left: calc(100% - var(--popup-side-tail-center-offset) + var(--popup-tail-shift-x));
 }
 
 .marker__popup--right::after {
-  left: clamp(6px, calc(6px - var(--popup-shift-x)), calc(100% - 18px));
-  transform: rotate(45deg);
+  left: calc(var(--popup-side-tail-center-offset) + var(--popup-tail-shift-x));
 }
 
 .marker__popup--above::after,
@@ -625,20 +637,12 @@ input {
   bottom: -6px;
 }
 
-.marker__popup--above::after {
-  left: clamp(12px, calc(50% - var(--popup-shift-x)), calc(100% - 12px));
-  transform: translateX(-50%) rotate(45deg);
-}
-
 .marker__popup--above-right::after {
-  left: clamp(6px, calc(6px - var(--popup-shift-x)), calc(100% - 18px));
-  transform: rotate(45deg);
+  left: calc(var(--popup-side-tail-center-offset) + var(--popup-tail-shift-x));
 }
 
 .marker__popup--above-left::after {
-  left: auto;
-  right: clamp(6px, calc(6px + var(--popup-shift-x)), calc(100% - 18px));
-  transform: rotate(45deg);
+  left: calc(100% - var(--popup-side-tail-center-offset) + var(--popup-tail-shift-x));
 }
 
 .marker:hover .marker__popup,
@@ -1071,7 +1075,7 @@ input {
   font-size: 14px;
   line-height: 1.5;
   text-align: center;
-  white-space: normal;
+  white-space: pre-line;
 }
 
 .final__bottom p {
@@ -1675,7 +1679,7 @@ input {
   .final__bottom p {
     width: 100%;
     margin-inline: auto;
-    white-space: normal;
+    white-space: pre-line;
   }
 
   /* Figma mobile: edge-to-edge, без border-radius */
