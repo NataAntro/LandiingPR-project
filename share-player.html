@@ -347,18 +347,18 @@
 
         .share-player-page {
           justify-content: center;
-          gap: clamp(12px, 1.5vw, 18px);
-          padding: clamp(14px, 2vw, 28px);
+          gap: clamp(16px, 1.8vw, 24px);
+          padding: clamp(20px, 2.4vw, 32px);
         }
 
         .share-player-topbar,
         .share-player-card {
-          width: min(100%, 1040px);
+          width: min(100%, 1080px);
         }
 
         .share-player-card {
-          padding: clamp(18px, 2.2vw, 28px);
-          border-radius: 30px;
+          padding: clamp(24px, 2.8vw, 36px);
+          border-radius: 32px;
           background:
             radial-gradient(circle at top right, rgba(103, 120, 182, 0.24), transparent 34%),
             linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(244, 247, 255, 0.86));
@@ -368,30 +368,30 @@
         }
 
         .share-player-back {
-          min-height: 42px;
-          padding: 0 18px;
-          font-size: 18px;
+          min-height: 46px;
+          padding: 0 20px;
+          font-size: 19px;
         }
 
         .share-player-back::before {
-          font-size: 18px;
+          font-size: 19px;
         }
 
         .share-player-copy {
-          margin-bottom: clamp(12px, 1.8vw, 20px);
+          margin-bottom: clamp(18px, 2.2vw, 28px);
         }
 
         .share-player-title {
-          margin-bottom: 8px;
+          margin-bottom: 12px;
           max-width: 11ch;
-          font-size: clamp(34px, 4vw, 52px);
+          font-size: clamp(38px, 4.4vw, 56px);
           text-align: left;
         }
 
         .share-player-status {
           margin-bottom: 0;
           max-width: 44ch;
-          font-size: 15px;
+          font-size: 16px;
           line-height: 1.5;
           text-align: left;
         }
@@ -399,7 +399,7 @@
         .share-player-body {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 22px;
         }
 
         .share-player-frame {
@@ -417,25 +417,25 @@
 
         .share-player-sidebar {
           min-height: 0;
-          padding: 18px;
-          border-radius: 24px;
+          padding: 24px;
+          border-radius: 26px;
           background:
             linear-gradient(180deg, rgba(245, 247, 255, 0.9), rgba(229, 235, 252, 0.88));
           border: 1px solid rgba(36, 56, 136, 0.09);
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
           justify-content: space-between;
-          gap: 18px;
+          gap: 22px;
         }
 
         .share-player-panel {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 12px;
         }
 
         .share-player-panel-kicker {
           color: rgba(36, 56, 136, 0.6);
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 700;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -444,7 +444,7 @@
         .share-player-panel-title {
           max-width: 12ch;
           font-family: "Unbounded", sans-serif;
-          font-size: clamp(22px, 2.2vw, 32px);
+          font-size: clamp(24px, 2.4vw, 34px);
           line-height: 1;
           letter-spacing: -0.04em;
         }
@@ -452,8 +452,8 @@
         .share-player-panel-copy {
           max-width: 34ch;
           color: rgba(36, 56, 136, 0.7);
-          font-size: 15px;
-          line-height: 1.45;
+          font-size: 16px;
+          line-height: 1.5;
         }
 
         .share-player-frame,
@@ -463,7 +463,7 @@
         }
 
         .share-player-loader {
-          padding: 20px;
+          padding: 24px;
         }
 
         .share-player-loader-shell {
@@ -495,15 +495,15 @@
         .share-player-actions {
           flex-direction: row;
           flex-wrap: wrap;
-          gap: 12px;
+          gap: 14px;
           margin-top: auto;
         }
 
         .share-player-button,
         .share-player-link {
           min-width: 160px;
-          min-height: 50px;
-          font-size: 16px;
+          min-height: 54px;
+          font-size: 17px;
         }
       }
 
@@ -518,7 +518,7 @@
             minmax(260px, min(34vw, 360px))
             minmax(280px, 1fr);
           align-items: stretch;
-          gap: clamp(18px, 2.2vw, 28px);
+          gap: clamp(28px, 3vw, 40px);
         }
 
         .share-player-frame {
@@ -527,10 +527,12 @@
 
         .share-player-sidebar {
           min-height: var(--share-player-frame-max-height);
+          padding: 26px;
         }
 
         .share-player-actions {
           flex-direction: column;
+          gap: 16px;
         }
 
         .share-player-button,
