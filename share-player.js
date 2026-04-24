@@ -23,6 +23,8 @@ const PENDING_LONG_DELAY_MS = 20_000;
 const CLIENT_FALLBACK_DELAY_MS = 60_000;
 const PLAYBACK_LOADING_MIN_VISIBLE_MS = 320;
 const DISABLE_BACKEND_RENDER_REQUEST = false;
+const STATIC_FALLBACK_IMAGE_URL = new URL("./assets/postcard.jpeg", window.location.href).toString();
+const STATIC_FALLBACK_FILE_NAME = "hotbox-postcard.jpeg";
 
 let streamUrl = params.get("stream") || "";
 let downloadUrl = params.get("download") || streamUrl;
@@ -340,6 +342,28 @@ const abortPendingRender = () => {
 const canUseClientFallback = () =>
   Boolean(window.HotboxVideoRenderer?.canRenderImageInBrowser?.());
 
+const showStaticFallbackImage = () => {
+  clearPendingTimers();
+  clearPlaybackLoadingFinalizeTimer();
+  isPlaybackLoadingActive = false;
+  playbackLoadingStartedAt = 0;
+  abortPendingRender();
+  revokeLocalVideoObjectUrl();
+  videoNode.pause();
+  videoNode.removeAttribute("src");
+  videoNode.load();
+  setVideoVisible(false);
+  setImageVisible(false);
+
+  streamUrl = "";
+  downloadUrl = STATIC_FALLBACK_IMAGE_URL;
+  fileName = STATIC_FALLBACK_FILE_NAME;
+  currentMediaKind = "image";
+  resetShareFileCache();
+  clearPendingRenderRequest();
+  loadImageIntoPlayer();
+};
+
 const getShareFlowStartedAt = () => {
   const pendingContext = getPendingRenderContext();
 
@@ -549,7 +573,7 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
     didResolve = true;
     clearPlaybackLoadingFinalizeTimer();
 
-    if (isTimedShareFlow && canUseClientFallback() && !isClientFallbackRunning) {
+    if (isTimedShareFlow && !isClientFallbackRunning) {
       startClientFallbackRender("Не удалось открыть видео, поэтому готовим картинку.");
       return;
     }
@@ -645,8 +669,7 @@ const startClientFallbackRender = async (
   }
 
   if (!canUseClientFallback()) {
-    applyRenderErrorPresentation();
-    setStatus("Не получилось подготовить картинку.");
+    showStaticFallbackImage();
     return;
   }
 
@@ -686,8 +709,7 @@ const startClientFallbackRender = async (
     loadImageIntoPlayer();
   } catch (error) {
     console.error(error);
-    applyRenderErrorPresentation();
-    setStatus("Не получилось подготовить картинку.");
+    showStaticFallbackImage();
   } finally {
     isClientFallbackRunning = false;
   }
@@ -696,7 +718,7 @@ const startClientFallbackRender = async (
 const scheduleClientFallbackRender = () => {
   clearClientFallbackTimer();
 
-  if (!isTimedShareFlow || isVideoReady || !canUseClientFallback()) {
+  if (!isTimedShareFlow || isVideoReady) {
     return;
   }
 
@@ -717,13 +739,7 @@ const requestServerRenderFromPendingPage = async () => {
   }
 
   if (!pendingContext.rendererBaseUrl) {
-    if (canUseClientFallback()) {
-      startClientFallbackRender("Бэкенд недоступен, поэтому готовим картинку.");
-      return;
-    }
-
-    applyRenderErrorPresentation();
-    setStatus("Упаковка сорвалась");
+    startClientFallbackRender("Бэкенд недоступен, поэтому готовим картинку.");
     return;
   }
 
@@ -776,14 +792,7 @@ const requestServerRenderFromPendingPage = async () => {
     }
 
     console.error(error);
-
-    if (canUseClientFallback()) {
-      startClientFallbackRender("Видео на бэкенде не собралось, поэтому готовим картинку.");
-      return;
-    }
-
-    applyRenderErrorPresentation();
-    setStatus("Упаковка сорвалась");
+    startClientFallbackRender("Видео на бэкенде не собралось, поэтому готовим картинку.");
   } finally {
     pendingRenderAbortController = null;
   }
