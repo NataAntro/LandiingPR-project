@@ -164,6 +164,7 @@ const applyPendingLongWaitPresentation = () => {
     title: "Эмоций оказалось многовато",
     copy: "Коробка сопротивляется! Если за минуту не закроем крышку — вернитесь на шаг назад, попробуем заново.",
   });
+  setLoaderCopy("Пакуем наболевшее!", "Ещё немного");
 };
 
 const applyClientFallbackPresentation = () => {

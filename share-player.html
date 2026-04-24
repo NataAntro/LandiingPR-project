@@ -342,6 +342,10 @@
 
       @media (min-width: 768px) {
         .share-player-page {
+          --share-player-frame-max-height: min(58dvh, 620px);
+        }
+
+        .share-player-page {
           justify-content: center;
           gap: clamp(12px, 1.5vw, 18px);
           padding: clamp(14px, 2vw, 28px);
@@ -399,8 +403,8 @@
         }
 
         .share-player-frame {
-          width: 100%;
-          max-width: min(100%, 360px);
+          width: min(100%, calc(var(--share-player-frame-max-height) * 9 / 16));
+          max-width: calc(var(--share-player-frame-max-height) * 9 / 16);
           margin: 0 auto;
           border-radius: 24px;
           background:
@@ -455,7 +459,7 @@
         .share-player-frame,
         .share-player-video,
         .share-player-image {
-          max-height: min(58vh, 620px);
+          max-height: var(--share-player-frame-max-height);
         }
 
         .share-player-loader {
@@ -504,6 +508,10 @@
       }
 
       @media (min-width: 1024px) {
+        .share-player-page {
+          --share-player-frame-max-height: min(58dvh, calc(100dvh - 220px), 620px);
+        }
+
         .share-player-body {
           display: grid;
           grid-template-columns:
@@ -514,13 +522,11 @@
         }
 
         .share-player-frame {
-          width: min(100%, calc((100vh - 210px) * 9 / 16));
-          max-width: 360px;
           margin: 0;
         }
 
         .share-player-sidebar {
-          min-height: min(58vh, 620px);
+          min-height: var(--share-player-frame-max-height);
         }
 
         .share-player-actions {
