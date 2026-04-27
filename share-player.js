@@ -22,13 +22,14 @@ const PENDING_LONG_DELAY_MS = 20_000;
 const CLIENT_FALLBACK_DELAY_MS = 45_000;
 const PLAYBACK_LOADING_MIN_VISIBLE_MS = 320;
 const DISABLE_BACKEND_RENDER_REQUEST = false;
+const DEFAULT_BOX_LABEL_VALUE = "ВСЕ ЭТИ БЛОКИРОВКИ";
 const STATIC_FALLBACK_IMAGE_URL = new URL("./assets/postcard.jpeg", window.location.href).toString();
 const STATIC_FALLBACK_FILE_NAME = "hotbox-postcard.jpeg";
 
 let streamUrl = params.get("stream") || "";
 let downloadUrl = params.get("download") || streamUrl;
 let fileName = params.get("fileName") || "hotbox.mp4";
-const label = params.get("label") || "Коробка отпущения";
+const label = params.get("label") || DEFAULT_BOX_LABEL_VALUE;
 const isPending = params.get("pending") === "1";
 const pendingRendererBaseUrlParam = params.get("rendererBaseUrl") || "";
 const startedAtParam = Number(params.get(SHARE_PLAYER_STARTED_AT_PARAM) || 0);
@@ -308,7 +309,7 @@ const getPendingRenderContext = () => {
   const pendingRequest = readPendingRenderRequest();
 
   return {
-    label: label || pendingRequest?.label || "Коробка отпущения",
+    label: label || pendingRequest?.label || DEFAULT_BOX_LABEL_VALUE,
     rendererBaseUrl: pendingRendererBaseUrlParam || pendingRequest?.rendererBaseUrl || "",
     createdAt: Number(pendingRequest?.createdAt || 0),
   };

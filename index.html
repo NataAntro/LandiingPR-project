@@ -147,6 +147,107 @@
               height="940"
             />
           </picture>
+          <div class="hero-cat" data-secret-checklist-root>
+            <button
+              class="hero-cat__hitbox"
+              type="button"
+              aria-label="Открыть секретный чек-лист"
+              aria-haspopup="dialog"
+              aria-expanded="false"
+              aria-controls="secret-checklist-modal"
+              data-secret-checklist-trigger
+            ></button>
+            <button
+              class="hero-cat__bubble"
+              type="button"
+              aria-label="Открыть секретный чек-лист"
+              aria-haspopup="dialog"
+              aria-expanded="false"
+              aria-controls="secret-checklist-modal"
+              data-secret-checklist-trigger
+            >
+              Нажимяу на меня!
+            </button>
+            <div class="hero-cat__burst" aria-hidden="true">
+              <span class="hero-cat__particle hero-cat__particle--heart"></span>
+              <span class="hero-cat__particle hero-cat__particle--paw"></span>
+              <span class="hero-cat__particle hero-cat__particle--heart"></span>
+              <span class="hero-cat__particle hero-cat__particle--paw"></span>
+              <span class="hero-cat__particle hero-cat__particle--heart"></span>
+              <span class="hero-cat__particle hero-cat__particle--paw"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div
+        class="checklist-modal"
+        id="secret-checklist-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="secret-checklist-title"
+        hidden
+        data-secret-checklist-modal
+      >
+        <div class="checklist-modal__overlay" data-secret-checklist-close></div>
+        <div class="checklist-modal__panel" tabindex="-1" data-secret-checklist-panel>
+          <h2 class="sr-only" id="secret-checklist-title">Секретный чек-лист</h2>
+          <button
+            class="checklist-modal__close"
+            type="button"
+            aria-label="Закрыть чек-лист"
+            data-secret-checklist-close
+          >
+            <span class="checklist-modal__close-icon" aria-hidden="true">×</span>
+          </button>
+          <img
+            class="checklist-modal__image"
+            src="./assets/chack.webp"
+            srcset="./assets/chack.webp 1086w"
+            sizes="(max-width: 767px) calc(95vw - 32px), min(95vw, 760px)"
+            alt="Секретный чек-лист для переезда"
+            loading="lazy"
+            decoding="async"
+            width="1086"
+            height="1448"
+          />
+        </div>
+      </div>
+
+      <!-- ─── VALUE TICKER ─────────────────────────────────── -->
+      <section
+        class="value-ticker"
+        aria-label="Переезд в Макс под ключ: 100% сохранение контента, аудитории и вашего личного времени."
+      >
+        <div class="value-ticker__track" aria-hidden="true">
+          <div class="value-ticker__set">
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+          </div>
+          <div class="value-ticker__set">
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+            <span class="value-ticker__item">Переезд в Макс под ключ: <span>100%</span> сохранение контента, аудитории и вашего личного времени.</span>
+            <span class="value-ticker__separator">✦</span>
+          </div>
         </div>
       </section>
 
@@ -521,7 +622,9 @@
       <section class="cta section" id="cta">
         <div class="container container--narrow">
           <div class="cta__copy">
-            <h2 class="section-title" id="cta-title">Коробка отпущения</h2>
+            <h2 class="section-title" id="cta-title">
+              Коробка <span class="cta__title-accent">отпущения</span>
+            </h2>
             <p
               data-desktop="Мы знаем, что переезд отнимает много сил. И иногда так хочется послать вот это всё… куда подальше. Не надо. Лучше пошлите коробку. Можете выбрать или сами написать наболевшее."
               data-mobile="Мы знаем, что переезд отнимает много сил. И иногда так хочется послать вот это всё… куда подальше. Не надо. Лучше пошлите коробку. Можете выбрать или сами написать наболевшее."
@@ -577,8 +680,8 @@
               />
             </picture>
             <div class="cta__label-note">
-              <span id="box-label-preview">КОНТЕНТ 2020–2024</span>
-              <small id="box-label-preview-secondary">(НЕ КАНТОВАТЬ)</small>
+              <span id="box-label-preview">ВСЕ ЭТИ БЛОКИРОВКИ</span>
+              <small id="box-label-preview-secondary"></small>
             </div>
           </div>
 

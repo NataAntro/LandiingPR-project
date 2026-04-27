@@ -1,5 +1,5 @@
 (function () {
-  const DEFAULT_BOX_LABEL_VALUE = "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)";
+  const DEFAULT_BOX_LABEL_VALUE = "ВСЕ ЭТИ БЛОКИРОВКИ";
   const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
   const POSTCARD_IMAGE_SOURCE = "./assets/postcard.jpeg";
   const VIDEO_EXPORT_MIME_TYPES = [
@@ -19,10 +19,6 @@
     hideAfterSeconds: 6,
   };
   const BOX_LABEL_BREAK_OVERRIDES = {
-    "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)": {
-      primary: "КОНТЕНТ\n2020–2024",
-      secondary: "(НЕ КАНТОВАТЬ)",
-    },
     "ОХВАТЫ (БЫЛО 10К, СТАЛО 300, НО МЫ ВЕРИМ)": {
       primary: "ОХВАТЫ",
       secondary: "(БЫЛО 10К, СТАЛО 300,\nНО МЫ ВЕРИМ)",
@@ -60,7 +56,7 @@
     const trimmedValue = String(value || "").trim();
 
     if (!trimmedValue) {
-      return ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
+      return [DEFAULT_BOX_LABEL_VALUE, ""];
     }
 
     if (BOX_LABEL_BREAK_OVERRIDES[trimmedValue]) {
@@ -205,8 +201,7 @@
     }
 
     const fontLoads = [
-      document.fonts.load(buildCanvasFont(PRIMARY_LABEL_STYLE, 36), "КОНТЕНТ 2020–2024"),
-      document.fonts.load(buildCanvasFont(SECONDARY_LABEL_STYLE, 36), "(НЕ КАНТОВАТЬ)"),
+      document.fonts.load(buildCanvasFont(PRIMARY_LABEL_STYLE, 36), DEFAULT_BOX_LABEL_VALUE),
     ];
 
     await Promise.all(fontLoads);

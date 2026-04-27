@@ -12,6 +12,11 @@ const hotboxRendererMeta = document.querySelector('meta[name="hotbox-renderer-ur
 const featuresSection = document.querySelector("#features");
 const firstFeatureCard = document.querySelector("#feature-card-1");
 const markers = Array.from(document.querySelectorAll("[data-marker]"));
+const secretChecklistRoot = document.querySelector("[data-secret-checklist-root]");
+const secretChecklistTriggers = Array.from(document.querySelectorAll("[data-secret-checklist-trigger]"));
+const secretChecklistModal = document.querySelector("[data-secret-checklist-modal]");
+const secretChecklistPanel = document.querySelector("[data-secret-checklist-panel]");
+const secretChecklistCloseControls = Array.from(document.querySelectorAll("[data-secret-checklist-close]"));
 const adaptiveCopyNodes = document.querySelectorAll("[data-mobile]");
 const mobileBreakpoint = window.matchMedia("(max-width: 767px)");
 const popupViewportGap = 12;
@@ -35,8 +40,8 @@ const RETURN_SCROLL_STORAGE_KEY = "hotbox:return-scroll-target";
 const CTA_RETURN_SCROLL_SELECTOR = "#cta-title";
 const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
 const SHARE_PLAYER_STARTED_AT_PARAM = "startedAt";
-const defaultBoxLabelValue = "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)";
-const defaultBoxLabelPreview = ["КОНТЕНТ 2020–2024", "(НЕ КАНТОВАТЬ)"];
+const defaultBoxLabelValue = "ВСЕ ЭТИ БЛОКИРОВКИ";
+const defaultBoxLabelPreview = ["ВСЕ ЭТИ БЛОКИРОВКИ", ""];
 const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
 const HOTBOX_RENDERER_BASE_URL = hotboxRendererMeta?.content.trim().replace(/\/$/, "") ?? "";
 const HOTBOX_RENDERER_RESOLVED_BASE_URL = HOTBOX_RENDERER_BASE_URL
@@ -46,10 +51,6 @@ const HOTBOX_RENDERER_RESOLVED_BASE_URL = HOTBOX_RENDERER_BASE_URL
     ).toString()
   : "";
 const boxLabelBreakOverrides = {
-  "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)": {
-    primary: "КОНТЕНТ\n2020–2024",
-    secondary: "(НЕ КАНТОВАТЬ)",
-  },
   "ОХВАТЫ (БЫЛО 10К, СТАЛО 300, НО МЫ ВЕРИМ)": {
     primary: "ОХВАТЫ",
     secondary: "(БЫЛО 10К, СТАЛО 300,\nНО МЫ ВЕРИМ)",
@@ -64,10 +65,13 @@ const CTA_EXPORT_SOURCES = {
   desktop: "./assets/cta-box-desktop.png",
 };
 const boxLabelOptions = [
-  "КОНТЕНТ 2020–2024 (НЕ КАНТОВАТЬ)",
-  "ПОДПИСЧИКИ (ЧАСТЬ ПРИБУДЕТ ПОЗЖЕ)",
-  "ВОВЛЕЧЁННОСТЬ (ЕСЛИ НАЙДУ)",
-  "КОММЕНТАРИИ (ОБРАЩАТЬСЯ БЕРЕЖНО)",
+  "ВСЕ ЭТИ БЛОКИРОВКИ",
+  "АЛГОРИТМЫ, РЕЖУЩИЕ ОХВАТЫ",
+  "ТЕНЕВЫЕ БАНЫ (ПУСТЬ ГОРЯТ)",
+  "СПАМ-БОТЫ ИЗ КОММЕНТАРИЕВ",
+  "ВЫГОРАНИЕ (УЖЕ ТРЕТЬЕ ЗА ГОД)",
+  "СЛЕТЕВШИЕ ЧЕРНОВИКИ (БОЛЬ)",
+  "«УМНАЯ» ЛЕНТА (СПАСИБО, ЧТО НЕ ПОКАЗЫВАЕШЬ)",
   "ОХВАТЫ (БЫЛО 10К, СТАЛО 300, НО МЫ ВЕРИМ)",
   "НЕРВЫ (ЗАКОНЧИЛИСЬ ЕЩЁ В 2022)",
 ];
@@ -105,6 +109,9 @@ let lastTouchTs = 0;
 let touchFastScrollHandled = false;
 let hasClearedDefaultBoxLabel = false;
 let activeRendererAbortController = null;
+let activeBeforeSecretChecklist = null;
+let secretChecklistCloseTimer = 0;
+let secretChecklistBurstTimer = 0;
 const previewTextMeasureCanvas = document.createElement("canvas");
 const previewTextMeasureContext = previewTextMeasureCanvas.getContext("2d");
 
@@ -1526,6 +1533,144 @@ const handleShareButtonClick = async () => {
   }, 2200);
 };
 
+const isSecretChecklistOpen = () =>
+  Boolean(secretChecklistModal && !secretChecklistModal.hidden && secretChecklistModal.classList.contains("is-open"));
+
+const getSecretChecklistFocusableNodes = () => {
+  if (!secretChecklistModal) {
+    return [];
+  }
+
+  return Array.from(
+    secretChecklistModal.querySelectorAll(
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+  ).filter((node) => node instanceof HTMLElement && node.offsetParent !== null);
+};
+
+const setSecretChecklistTriggerState = (isExpanded) => {
+  secretChecklistTriggers.forEach((trigger) => {
+    trigger.setAttribute("aria-expanded", String(isExpanded));
+  });
+};
+
+const runSecretChecklistBurst = () => {
+  if (!secretChecklistRoot) {
+    return;
+  }
+
+  window.clearTimeout(secretChecklistBurstTimer);
+  secretChecklistRoot.classList.remove("is-bursting");
+  void secretChecklistRoot.offsetWidth;
+  secretChecklistRoot.classList.add("is-activated", "is-bursting");
+
+  secretChecklistBurstTimer = window.setTimeout(() => {
+    secretChecklistRoot.classList.remove("is-bursting");
+  }, 820);
+};
+
+const positionSecretChecklistModalFromTrigger = (trigger) => {
+  if (!secretChecklistModal || !(trigger instanceof HTMLElement)) {
+    return;
+  }
+
+  const rect = trigger.getBoundingClientRect();
+  const startX = rect.left + rect.width / 2 - window.innerWidth / 2;
+  const startY = rect.top + rect.height / 2 - window.innerHeight / 2;
+
+  secretChecklistModal.style.setProperty("--checklist-start-x", `${startX.toFixed(1)}px`);
+  secretChecklistModal.style.setProperty("--checklist-start-y", `${startY.toFixed(1)}px`);
+};
+
+const focusSecretChecklist = () => {
+  const focusableNodes = getSecretChecklistFocusableNodes();
+  const closeControl = focusableNodes.find((node) => node.matches("[data-secret-checklist-close]"));
+
+  (closeControl || secretChecklistPanel)?.focus({ preventScroll: true });
+};
+
+const openSecretChecklist = (trigger) => {
+  if (!secretChecklistModal || !secretChecklistPanel) {
+    return;
+  }
+
+  window.clearTimeout(secretChecklistCloseTimer);
+  activeBeforeSecretChecklist = document.activeElement instanceof HTMLElement
+    ? document.activeElement
+    : null;
+
+  positionSecretChecklistModalFromTrigger(trigger);
+  secretChecklistModal.hidden = false;
+  document.body.classList.add("has-checklist-modal");
+  setSecretChecklistTriggerState(true);
+
+  requestAnimationFrame(() => {
+    secretChecklistModal.classList.add("is-open");
+    window.setTimeout(focusSecretChecklist, 80);
+  });
+};
+
+const closeSecretChecklist = () => {
+  if (!secretChecklistModal || secretChecklistModal.hidden) {
+    return;
+  }
+
+  secretChecklistModal.classList.remove("is-open");
+  document.body.classList.remove("has-checklist-modal");
+  setSecretChecklistTriggerState(false);
+  window.clearTimeout(secretChecklistCloseTimer);
+
+  secretChecklistCloseTimer = window.setTimeout(() => {
+    secretChecklistModal.hidden = true;
+    secretChecklistRoot?.classList.remove("is-activated", "is-bursting");
+
+    if (activeBeforeSecretChecklist?.isConnected) {
+      activeBeforeSecretChecklist.focus({ preventScroll: true });
+    }
+
+    activeBeforeSecretChecklist = null;
+  }, 340);
+};
+
+const handleSecretChecklistKeydown = (event) => {
+  if (!isSecretChecklistOpen()) {
+    return;
+  }
+
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeSecretChecklist();
+    return;
+  }
+
+  if (event.key !== "Tab") {
+    return;
+  }
+
+  const focusableNodes = getSecretChecklistFocusableNodes();
+
+  if (focusableNodes.length === 0) {
+    event.preventDefault();
+    secretChecklistPanel?.focus({ preventScroll: true });
+    return;
+  }
+
+  const firstNode = focusableNodes[0];
+  const lastNode = focusableNodes[focusableNodes.length - 1];
+  const activeNode = document.activeElement;
+
+  if (event.shiftKey && activeNode === firstNode) {
+    event.preventDefault();
+    lastNode.focus({ preventScroll: true });
+    return;
+  }
+
+  if (!event.shiftKey && activeNode === lastNode) {
+    event.preventDefault();
+    firstNode.focus({ preventScroll: true });
+  }
+};
+
 window.addEventListener("pagehide", abortActiveRendererRequest);
 window.addEventListener("beforeunload", abortActiveRendererRequest);
 
@@ -1556,6 +1701,22 @@ if (heroCtaButton && featuresSection && firstFeatureCard) {
     targetNode.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
+
+secretChecklistTriggers.forEach((trigger) => {
+  trigger.addEventListener("click", (event) => {
+    event.preventDefault();
+    runSecretChecklistBurst();
+    window.setTimeout(() => {
+      openSecretChecklist(trigger);
+    }, 140);
+  });
+});
+
+secretChecklistCloseControls.forEach((control) => {
+  control.addEventListener("click", closeSecretChecklist);
+});
+
+document.addEventListener("keydown", handleSecretChecklistKeydown);
 
 markers.forEach((marker) => {
   marker.addEventListener("click", (event) => {
