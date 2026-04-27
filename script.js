@@ -112,6 +112,7 @@ let activeRendererAbortController = null;
 let activeBeforeSecretChecklist = null;
 let secretChecklistCloseTimer = 0;
 let secretChecklistBurstTimer = 0;
+let lastSecretChecklistActivationAt = 0;
 const previewTextMeasureCanvas = document.createElement("canvas");
 const previewTextMeasureContext = previewTextMeasureCanvas.getContext("2d");
 
@@ -1671,6 +1672,22 @@ const handleSecretChecklistKeydown = (event) => {
   }
 };
 
+const activateSecretChecklist = (event, trigger) => {
+  const now = performance.now();
+
+  if (now - lastSecretChecklistActivationAt < 420) {
+    event.preventDefault();
+    return;
+  }
+
+  lastSecretChecklistActivationAt = now;
+  event.preventDefault();
+  runSecretChecklistBurst();
+  window.setTimeout(() => {
+    openSecretChecklist(trigger);
+  }, 140);
+};
+
 window.addEventListener("pagehide", abortActiveRendererRequest);
 window.addEventListener("beforeunload", abortActiveRendererRequest);
 
@@ -1703,13 +1720,15 @@ if (heroCtaButton && featuresSection && firstFeatureCard) {
 }
 
 secretChecklistTriggers.forEach((trigger) => {
-  trigger.addEventListener("click", (event) => {
-    event.preventDefault();
-    runSecretChecklistBurst();
-    window.setTimeout(() => {
-      openSecretChecklist(trigger);
-    }, 140);
+  trigger.addEventListener("click", (event) => activateSecretChecklist(event, trigger));
+  trigger.addEventListener("pointerup", (event) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+
+    activateSecretChecklist(event, trigger);
   });
+  trigger.addEventListener("touchend", (event) => activateSecretChecklist(event, trigger), { passive: false });
 });
 
 secretChecklistCloseControls.forEach((control) => {
