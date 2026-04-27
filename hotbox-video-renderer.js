@@ -56,7 +56,11 @@
     const trimmedValue = String(value || "").trim();
 
     if (!trimmedValue) {
-      return [DEFAULT_BOX_LABEL_VALUE, ""];
+      return ["ВСЕ ЭТИ\nБЛОКИРОВКИ", ""];
+    }
+
+    if (trimmedValue === DEFAULT_BOX_LABEL_VALUE) {
+      return ["ВСЕ ЭТИ\nБЛОКИРОВКИ", ""];
     }
 
     if (BOX_LABEL_BREAK_OVERRIDES[trimmedValue]) {

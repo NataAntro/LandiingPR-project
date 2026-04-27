@@ -771,8 +771,10 @@ input {
   backface-visibility: hidden;
 }
 
-.value-ticker:hover .value-ticker__track {
-  animation-play-state: paused;
+@media (hover: hover) and (pointer: fine) {
+  .value-ticker:hover .value-ticker__track {
+    animation-play-state: paused;
+  }
 }
 
 .value-ticker__set {

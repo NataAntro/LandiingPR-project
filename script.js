@@ -41,7 +41,7 @@ const CTA_RETURN_SCROLL_SELECTOR = "#cta-title";
 const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
 const SHARE_PLAYER_STARTED_AT_PARAM = "startedAt";
 const defaultBoxLabelValue = "ВСЕ ЭТИ БЛОКИРОВКИ";
-const defaultBoxLabelPreview = ["ВСЕ ЭТИ БЛОКИРОВКИ", ""];
+const defaultBoxLabelPreview = ["ВСЕ ЭТИ\nБЛОКИРОВКИ", ""];
 const CTA_EXPORT_VIDEO_SOURCE = "./assets/box.mp4";
 const HOTBOX_RENDERER_BASE_URL = hotboxRendererMeta?.content.trim().replace(/\/$/, "") ?? "";
 const HOTBOX_RENDERER_RESOLVED_BASE_URL = HOTBOX_RENDERER_BASE_URL
@@ -174,6 +174,10 @@ const splitBoxLabelForPreview = (value) => {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) {
+    return defaultBoxLabelPreview;
+  }
+
+  if (trimmedValue === defaultBoxLabelValue) {
     return defaultBoxLabelPreview;
   }
 
