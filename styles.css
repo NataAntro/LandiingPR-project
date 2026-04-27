@@ -659,9 +659,9 @@ input {
   position: relative;
   z-index: 1;
   display: flex;
-  width: fit-content;
-  max-width: min(95vw, 760px);
-  max-height: 90vh;
+  width: min(95vw, 705px, 63.75vh);
+  max-height: min(85vh, 940px);
+  aspect-ratio: 1086 / 1448;
   border-radius: 8px;
   background: var(--white);
   box-shadow: 0 30px 90px rgba(15, 23, 42, 0.34);
@@ -706,6 +706,14 @@ input {
   cursor: pointer;
   font-size: 28px;
   line-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.checklist-modal.is-image-ready .checklist-modal__close {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .checklist-modal__close-icon {
@@ -715,12 +723,16 @@ input {
 }
 
 .checklist-modal__image {
-  width: auto;
-  max-width: 100%;
-  max-height: min(85vh, 940px);
-  height: auto;
+  width: 100%;
+  height: 100%;
   border-radius: 8px;
   object-fit: contain;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.checklist-modal.is-image-ready .checklist-modal__image {
+  opacity: 1;
 }
 
 /* ─── Value ticker ───────────────────────────────────────── */

@@ -16,6 +16,7 @@ const secretChecklistRoot = document.querySelector("[data-secret-checklist-root]
 const secretChecklistTriggers = Array.from(document.querySelectorAll("[data-secret-checklist-trigger]"));
 const secretChecklistModal = document.querySelector("[data-secret-checklist-modal]");
 const secretChecklistPanel = document.querySelector("[data-secret-checklist-panel]");
+const secretChecklistImage = document.querySelector(".checklist-modal__image");
 const secretChecklistCloseControls = Array.from(document.querySelectorAll("[data-secret-checklist-close]"));
 const adaptiveCopyNodes = document.querySelectorAll("[data-mobile]");
 const mobileBreakpoint = window.matchMedia("(max-width: 767px)");
@@ -58,6 +59,12 @@ const boxLabelBreakOverrides = {
   "НЕРВЫ (ЗАКОНЧИЛИСЬ ЕЩЁ В 2022)": {
     primary: "НЕРВЫ",
     secondary: "(ЗАКОНЧИЛИСЬ\nЕЩЁ В 2022)",
+  },
+};
+const mobileBoxLabelPreviewBreakOverrides = {
+  "«УМНАЯ» ЛЕНТА (СПАСИБО, ЧТО НЕ ПОКАЗЫВАЕШЬ)": {
+    primary: "«УМНАЯ» ЛЕНТА",
+    secondary: "(СПАСИБО, ЧТО НЕ\nПОКАЗЫВАЕШЬ)",
   },
 };
 const CTA_EXPORT_SOURCES = {
@@ -112,6 +119,7 @@ let activeRendererAbortController = null;
 let activeBeforeSecretChecklist = null;
 let secretChecklistCloseTimer = 0;
 let secretChecklistBurstTimer = 0;
+let secretChecklistImageReadyRequestId = 0;
 let lastSecretChecklistActivationAt = 0;
 const previewTextMeasureCanvas = document.createElement("canvas");
 const previewTextMeasureContext = previewTextMeasureCanvas.getContext("2d");
@@ -552,7 +560,13 @@ const syncLabelPreview = () => {
     return;
   }
 
-  const [primaryText, secondaryText] = splitBoxLabelForPreview(input.value);
+  const trimmedValue = input.value.trim();
+  const mobilePreviewOverride = mobileBreakpoint.matches
+    ? mobileBoxLabelPreviewBreakOverrides[trimmedValue]
+    : null;
+  const [primaryText, secondaryText] = mobilePreviewOverride
+    ? [mobilePreviewOverride.primary, mobilePreviewOverride.secondary]
+    : splitBoxLabelForPreview(input.value);
   const labelStyles = window.getComputedStyle(preview);
   const secondaryStyles = window.getComputedStyle(previewSecondary);
   const textWidth = ctaLabelNote.clientWidth;
@@ -1588,10 +1602,47 @@ const positionSecretChecklistModalFromTrigger = (trigger) => {
 };
 
 const focusSecretChecklist = () => {
+  if (!secretChecklistModal?.classList.contains("is-image-ready")) {
+    secretChecklistPanel?.focus({ preventScroll: true });
+    return;
+  }
+
   const focusableNodes = getSecretChecklistFocusableNodes();
   const closeControl = focusableNodes.find((node) => node.matches("[data-secret-checklist-close]"));
 
   (closeControl || secretChecklistPanel)?.focus({ preventScroll: true });
+};
+
+const syncSecretChecklistImageReady = () => {
+  if (!secretChecklistModal || !secretChecklistImage) {
+    return;
+  }
+
+  const requestId = ++secretChecklistImageReadyRequestId;
+
+  if (secretChecklistImage.complete && secretChecklistImage.naturalWidth > 0) {
+    secretChecklistModal.classList.add("is-image-ready");
+    return;
+  }
+
+  secretChecklistModal.classList.remove("is-image-ready");
+  secretChecklistImage.loading = "eager";
+
+  waitForImageReady(secretChecklistImage)
+    .then(() => {
+      if (requestId !== secretChecklistImageReadyRequestId || secretChecklistModal.hidden) {
+        return;
+      }
+
+      secretChecklistModal.classList.add("is-image-ready");
+    })
+    .catch(() => {
+      if (requestId !== secretChecklistImageReadyRequestId || secretChecklistModal.hidden) {
+        return;
+      }
+
+      secretChecklistModal.classList.add("is-image-ready");
+    });
 };
 
 const openSecretChecklist = (trigger) => {
@@ -1605,6 +1656,7 @@ const openSecretChecklist = (trigger) => {
     : null;
 
   positionSecretChecklistModalFromTrigger(trigger);
+  syncSecretChecklistImageReady();
   secretChecklistModal.hidden = false;
   document.body.classList.add("has-checklist-modal");
   setSecretChecklistTriggerState(true);
@@ -1621,6 +1673,8 @@ const closeSecretChecklist = () => {
   }
 
   secretChecklistModal.classList.remove("is-open");
+  secretChecklistModal.classList.remove("is-image-ready");
+  secretChecklistImageReadyRequestId += 1;
   document.body.classList.remove("has-checklist-modal");
   setSecretChecklistTriggerState(false);
   window.clearTimeout(secretChecklistCloseTimer);
