@@ -19,7 +19,9 @@ const secretChecklistPanel = document.querySelector("[data-secret-checklist-pane
 const secretChecklistImage = document.querySelector(".checklist-modal__image");
 const secretChecklistCloseControls = Array.from(document.querySelectorAll("[data-secret-checklist-close]"));
 const adaptiveCopyNodes = document.querySelectorAll("[data-mobile]");
+const brand = document.querySelector(".brand");
 const mobileBreakpoint = window.matchMedia("(max-width: 767px)");
+const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const popupViewportGap = 12;
 const popupSideTailInset = 20;
 const popupTailSize = 12;
@@ -37,6 +39,7 @@ const FAST_SCROLL_RECENT_WHEEL_INPUT_MS = 220;
 const FAST_SCROLL_COARSE_WHEEL_DELTA_PX = 96;
 const FAST_SCROLL_TOUCH_THRESHOLD_PX_PER_SEC = 1100;
 const FAST_SCROLL_TOUCH_MIN_DISTANCE_PX = 72;
+const BRAND_REVEAL_IDLE_DELAY_MS = 1700;
 const RETURN_SCROLL_STORAGE_KEY = "hotbox:return-scroll-target";
 const CTA_RETURN_SCROLL_SELECTOR = "#cta-title";
 const PENDING_RENDER_STORAGE_KEY = "hotbox:pending-render-request";
@@ -1746,8 +1749,43 @@ const activateSecretChecklist = (event, trigger) => {
   }, 140);
 };
 
+const setupBrandReveal = () => {
+  if (!brand || reducedMotionQuery.matches || !("IntersectionObserver" in window)) {
+    return;
+  }
+
+  brand.classList.add("is-brand-pending");
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const isVisible = entries.some((entry) => entry.isIntersecting);
+
+      if (!isVisible) {
+        return;
+      }
+
+      brand.classList.remove("is-brand-pending");
+      brand.classList.add("is-brand-visible");
+      observer.disconnect();
+
+      window.setTimeout(() => {
+        brand.classList.remove("is-brand-visible");
+        brand.classList.add("is-brand-entered");
+      }, BRAND_REVEAL_IDLE_DELAY_MS);
+    },
+    {
+      rootMargin: "0px 0px -8% 0px",
+      threshold: 0.28,
+    }
+  );
+
+  observer.observe(brand);
+};
+
 window.addEventListener("pagehide", abortActiveRendererRequest);
 window.addEventListener("beforeunload", abortActiveRendererRequest);
+
+setupBrandReveal();
 
 if (input && preview && previewSecondary) {
   input.addEventListener("focus", maybeClearDefaultBoxLabel);
