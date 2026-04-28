@@ -527,6 +527,15 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
   clearPlaybackLoadingFinalizeTimer();
   let didResolve = false;
   let hasPlaybackAttemptStarted = false;
+  let videoFrameCallbackId = 0;
+  const cancelVideoFrameCallback = () => {
+    if (!videoFrameCallbackId || typeof videoNode.cancelVideoFrameCallback !== "function") {
+      return;
+    }
+
+    videoNode.cancelVideoFrameCallback(videoFrameCallbackId);
+    videoFrameCallbackId = 0;
+  };
   const finishReady = () => {
     if (didResolve) {
       return;
@@ -535,6 +544,7 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
     didResolve = true;
     isVideoReady = true;
     clearPendingTimers();
+    cancelVideoFrameCallback();
     setImageVisible(false);
     setVideoVisible(true);
     setLoaderVisible(false);
@@ -578,6 +588,7 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
 
     didResolve = true;
     clearPlaybackLoadingFinalizeTimer();
+    cancelVideoFrameCallback();
 
     if (isTimedShareFlow && !isClientFallbackRunning) {
       startClientFallbackRender();
@@ -605,12 +616,19 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
         }
       });
     }
+
+    if (typeof videoNode.requestVideoFrameCallback === "function") {
+      videoFrameCallbackId = videoNode.requestVideoFrameCallback(() => {
+        videoFrameCallbackId = 0;
+        markPlaybackStarted();
+      });
+    }
   };
 
   applyWaitingPresentationForCurrentProgress();
   if (!skipPendingTimers) {
     schedulePendingLongWaitPresentation();
-    scheduleClientFallbackRender();
+    scheduleClientFallbackRender({ useShareFlowElapsedTime: false });
   }
   setLoaderVisible(true);
   disableDownloadLink();
@@ -623,8 +641,10 @@ const loadVideoIntoPlayer = ({ skipPendingTimers = false } = {}) => {
   videoNode.load();
   videoNode.addEventListener("loadeddata", startPlaybackAttempt, { once: true });
   videoNode.addEventListener("canplay", startPlaybackAttempt, { once: true });
-  videoNode.addEventListener("playing", markPlaybackStarted, { once: true });
-  videoNode.addEventListener("timeupdate", markPlaybackStarted, { once: true });
+  if (typeof videoNode.requestVideoFrameCallback !== "function") {
+    videoNode.addEventListener("playing", markPlaybackStarted, { once: true });
+    videoNode.addEventListener("timeupdate", markPlaybackStarted, { once: true });
+  }
   videoNode.addEventListener("error", finalizeError, { once: true });
   videoNode.src = streamUrl;
   videoNode.load();
@@ -733,12 +753,16 @@ const startClientFallbackRender = async () => {
   }
 };
 
-const scheduleClientFallbackRender = () => {
+const scheduleClientFallbackRender = ({ useShareFlowElapsedTime = true } = {}) => {
   clearClientFallbackTimer();
 
   if (!isTimedShareFlow || isVideoReady) {
     return;
   }
+
+  const fallbackDelay = useShareFlowElapsedTime
+    ? getRemainingDelay(CLIENT_FALLBACK_DELAY_MS)
+    : CLIENT_FALLBACK_DELAY_MS;
 
   clientFallbackTimeoutId = window.setTimeout(() => {
     clientFallbackTimeoutId = null;
@@ -746,7 +770,7 @@ const scheduleClientFallbackRender = () => {
     if (isTimedShareFlow && !isVideoReady) {
       startClientFallbackRender();
     }
-  }, getRemainingDelay(CLIENT_FALLBACK_DELAY_MS));
+  }, fallbackDelay);
 };
 
 const requestServerRenderFromPendingPage = async () => {
