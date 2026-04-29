@@ -609,6 +609,10 @@ const applyMarkerPopupFit = (marker, fit) => {
 };
 
 const resolveMarkerPopupBoundaryContainer = (marker) => {
+  const boundarySelector = marker?.dataset.popupBoundary;
+  const boundary = boundarySelector ? marker.closest(boundarySelector) : null;
+  if (boundary) return boundary;
+
   const mediaVisual = marker?.closest(".feature-card__media-visual");
   if (mediaVisual) return mediaVisual;
 

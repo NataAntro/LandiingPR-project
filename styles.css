@@ -1318,7 +1318,13 @@ input {
 
 .intro__check-popup {
   align-items: center;
+  padding: 7px 8px;
   text-align: center;
+  white-space: nowrap;
+}
+
+.intro__check-popup .marker__popup-text {
+  line-height: 16px;
 }
 
 .intro__check-lead {
