@@ -648,6 +648,19 @@ const getPopupShiftAdjustment = (popup) => {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 };
 
+const getMarkerPopupAnchorCenterX = (marker) => {
+  const anchorSelector = marker?.dataset.popupAnchor;
+  const anchor = anchorSelector ? marker.querySelector(anchorSelector) : null;
+  const anchorRect = anchor?.getBoundingClientRect();
+
+  if (anchorRect?.width) return anchorRect.left + anchorRect.width / 2;
+
+  const markerRect = marker.getBoundingClientRect();
+  return markerRect.left + markerRect.width / 2;
+};
+
+const hasMarkerPopupAnchor = (marker) => Boolean(marker?.dataset.popupAnchor);
+
 const measureMarkerPopupFit = (marker) => {
   const popup = marker?.querySelector(".marker__popup");
 
@@ -670,16 +683,15 @@ const measureMarkerPopupFit = (marker) => {
     maxRight = viewportOffsetLeft + viewportWidth - popupViewportGap;
   }
 
-  const markerRect = marker.getBoundingClientRect();
-  const markerCenterX = markerRect.left + markerRect.width / 2;
+  const markerCenterX = getMarkerPopupAnchorCenterX(marker);
   const tailCenterOffset = getPopupTailCenterOffset(popup, popupRect.width);
   const shiftAdjustmentX = getPopupShiftAdjustment(popup);
-  const hasManualDesktopShift = shiftAdjustmentX !== 0;
+  const shouldShiftTail = shiftAdjustmentX !== 0 || hasMarkerPopupAnchor(marker);
   const minShiftX = minLeft - popupRect.left;
   const maxShiftX = maxRight - popupRect.right;
   const desiredShiftX = markerCenterX - (popupRect.left + tailCenterOffset) + shiftAdjustmentX;
   const shiftX = Math.min(maxShiftX, Math.max(minShiftX, desiredShiftX));
-  const tailShiftX = hasManualDesktopShift
+  const tailShiftX = shouldShiftTail
     ? markerCenterX - (popupRect.left + shiftX + tailCenterOffset)
     : 0;
 

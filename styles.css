@@ -1211,7 +1211,10 @@ input {
 
 .marker:hover .marker__popup,
 .marker.is-active .marker__popup,
-.marker:focus-visible .marker__popup {
+.marker:focus-visible .marker__popup,
+.intro__check:hover .marker__popup,
+.intro__check.is-active .marker__popup,
+.intro__check:focus-visible .marker__popup {
   opacity: 1;
   transform: var(--popup-transform-visible);
 }
@@ -1285,14 +1288,37 @@ input {
 
 /* Figma: gap 4px (не 10px), color #3f559e (не muted) */
 .intro__check {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--brand-mid);
+  font: inherit;
   font-size: 14px;
   line-height: 1.3;
   align-self: center;
+  appearance: none;
+  cursor: pointer;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+  --popup-shift-x: 0px;
+}
+
+.intro__check:focus-visible {
+  outline: 2px solid rgba(36, 56, 136, 0.35);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.intro__check-popup {
+  align-items: center;
+  text-align: center;
 }
 
 .intro__check-lead {

@@ -393,11 +393,22 @@
               <span class="text--desktop">У нас тут <strong>три полезных инструмента</strong>, чтобы <s>вашу маму</s> ваш контент и тут и там показывали. Ступайте в квартиру, и соберите всё самое необходимое.</span>
               <span class="text--mobile">У нас тут <strong>три полезных инструмента</strong>, чтобы <s>вашу маму</s> ваш контент и тут и там показывали. Ступайте в квартиру, и соберите всё самое необходимое.</span>
             </p>
-            <div class="intro__check">
+            <button
+              class="intro__check intro__check-marker"
+              type="button"
+              data-marker
+              data-popup-anchor=".intro__check-icon"
+              aria-expanded="false"
+              aria-label="Показать подсказку: Навык активирован"
+              style="--popup-width: 155px;"
+            >
               <span class="intro__check-lead" data-desktop="Наведите на" data-mobile="Нажмите на">Наведите на</span>
-              <img src="./assets/399caefc-7a8c-4c3e-aced-c91e8abd21fe.svg" alt="" width="27" height="27" />
+              <img class="intro__check-icon" src="./assets/399caefc-7a8c-4c3e-aced-c91e8abd21fe.svg" alt="" width="27" height="27" />
               <span>, чтобы узнать больше</span>
-            </div>
+              <span class="marker__popup intro__check-popup">
+                <span class="marker__popup-text">Навык активирован</span>
+              </span>
+            </button>
           </div>
         </div>
       </section>
