@@ -722,7 +722,15 @@ input {
   transform: translateY(-1px);
 }
 
+.checklist-modal__media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
 .checklist-modal__image {
+  display: block;
   width: 100%;
   height: 100%;
   border-radius: 8px;
@@ -733,6 +741,73 @@ input {
 
 .checklist-modal.is-image-ready .checklist-modal__image {
   opacity: 1;
+}
+
+.checklist-modal__services {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.checklist-modal.is-image-ready .checklist-modal__services {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.brand__link.checklist-modal__service-link {
+  position: absolute;
+  top: var(--service-top);
+  left: var(--service-left);
+  width: clamp(30px, 6.8%, 48px);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 23%;
+  transform: translate(-50%, -50%);
+  animation: checklist-service-badge-lift 7.2s ease-in-out var(--brand-idle-delay) infinite;
+}
+
+.brand__link.checklist-modal__service-link::after {
+  border-radius: inherit;
+}
+
+.brand__link.checklist-modal__service-link:hover,
+.brand.is-brand-visible .checklist-modal__service-link:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08) 48%, rgba(255, 255, 255, 0.18)),
+    rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    inset 0 -1px 0 rgba(36, 56, 136, 0.12),
+    0 14px 30px rgba(20, 31, 83, 0.22);
+  transform: translate(-50%, -50%) scale(1.04);
+}
+
+.brand__link.checklist-modal__service-link:focus-visible {
+  transform: translate(-50%, -50%);
+}
+
+.brand__link.checklist-modal__service-link:active,
+.brand.is-brand-visible .checklist-modal__service-link:active {
+  transform: translate(-50%, -50%) scale(0.99);
+}
+
+.brand__asset.checklist-modal__service-asset {
+  width: 64%;
+  height: 64%;
+}
+
+.brand__asset--tgmax.checklist-modal__service-asset {
+  width: 70%;
+  height: 70%;
+}
+
+.brand__asset.checklist-modal__service-asset--wordmark {
+  width: 72%;
+  height: 72%;
 }
 
 /* ─── Value ticker ───────────────────────────────────────── */
@@ -1288,6 +1363,16 @@ input {
   text-align: center;
 }
 
+.feature-card__body p strong {
+  color: #2f3238;
+  font-weight: 600;
+}
+
+.feature-card__body p .feature-card__service-name {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 /* Стандартный медиа-блок (card 1, card 2) */
 .feature-card__media {
   position: relative;
@@ -1600,7 +1685,34 @@ input {
   font-size: 16px;
   line-height: 1.5;
   text-align: center;
-  white-space: pre-line;
+  white-space: normal;
+}
+
+.final__subtitle-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.final__subtitle-link {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition:
+    color 180ms ease,
+    text-decoration-color 180ms ease;
+}
+
+.final__subtitle-link:hover,
+.final__subtitle-link:focus-visible {
+  color: var(--warm-accent);
+}
+
+.final__subtitle-link:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .final__bottom p {
@@ -1795,6 +1907,11 @@ input {
     transform 260ms ease;
 }
 
+.brand__asset--tgmax {
+  width: 38px;
+  height: 38px;
+}
+
 .brand__link:hover .brand__asset,
 .brand__link:focus-visible .brand__asset {
   filter: drop-shadow(0 8px 15px rgba(16, 24, 40, 0.22));
@@ -1908,6 +2025,32 @@ input {
   23% {
     opacity: 0;
     transform: translateX(125%);
+  }
+}
+
+@keyframes checklist-service-badge-lift {
+  0%,
+  100% {
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      inset 0 -1px 0 rgba(36, 56, 136, 0.12),
+      0 12px 28px rgba(20, 31, 83, 0.2);
+    transform: translate(-50%, -50%);
+  }
+
+  10% {
+    border-color: rgba(255, 255, 255, 0.44);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.54),
+      inset 0 -1px 0 rgba(36, 56, 136, 0.1),
+      0 16px 32px rgba(20, 31, 83, 0.23),
+      0 0 18px rgba(255, 255, 255, 0.12);
+    transform: translate(-50%, -50%);
+  }
+
+  22% {
+    transform: translate(-50%, -50%);
   }
 }
 
@@ -2544,7 +2687,10 @@ input {
   .final__bottom p {
     width: 100%;
     margin-inline: auto;
-    white-space: pre-line;
+  }
+
+  .final__subtitle-line {
+    white-space: normal;
   }
 
   /* Figma mobile: edge-to-edge, без border-radius */
@@ -2610,6 +2756,13 @@ input {
   .brand__link:focus-visible .brand__asset {
     transition: filter 180ms ease;
     transform: none;
+  }
+
+  .brand__link.checklist-modal__service-link,
+  .brand__link.checklist-modal__service-link:hover,
+  .brand__link.checklist-modal__service-link:focus-visible,
+  .brand__link.checklist-modal__service-link:active {
+    transform: translate(-50%, -50%);
   }
 
   .checklist-modal__panel,

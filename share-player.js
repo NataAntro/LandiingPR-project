@@ -50,12 +50,12 @@ let playbackLoadingStartedAt = 0;
 
 const setTitle = (message) => {
   if (titleNode) {
-    if (message === "Вот она, родимая") {
+    if (message === "Вот она, окаянная") {
       titleNode.replaceChildren(
         document.createTextNode("Вот она, "),
         Object.assign(document.createElement("span"), {
           className: "share-player-title__accent",
-          textContent: "родимая",
+          textContent: "окаянная",
         })
       );
       return;
@@ -920,7 +920,7 @@ const scrollOpenerToLandingTarget = () => {
   return true;
 };
 
-setTitle("Вот она, родимая");
+setTitle("Вот она, окаянная");
 disableDownloadLink();
 
 if (!streamUrl) {
