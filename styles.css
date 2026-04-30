@@ -2641,6 +2641,11 @@ input {
     --marker-left: 88.3382% !important;
   }
 
+  .feature-card:nth-child(3) .feature-marker:nth-of-type(3) {
+    --marker-top: 73.35% !important;
+    --marker-left: 26.1% !important;
+  }
+
   /* CTA */
   .cta {
     min-height: auto;
